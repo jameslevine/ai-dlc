@@ -1,0 +1,17 @@
+[project]
+name = "billing"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.115", "boto3>=1.35"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.16", "pyright>=1.1"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pyright]
+include = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

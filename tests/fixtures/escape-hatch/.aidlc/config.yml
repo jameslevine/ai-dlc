@@ -1,0 +1,7 @@
+schema: 1
+targets:
+  - path: .
+    setup: none
+    steps:
+      test: "zig build test"
+      build: "zig build"
