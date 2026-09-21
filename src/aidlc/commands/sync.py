@@ -94,7 +94,13 @@ def _run(
         force=force,
     )
 
-    if write and not any(change.is_conflict for change in changes):
+    if write:
+        # The profile and lockfile are written even when an artifact conflicted.
+        # A conflict on one optional emitter must not leave the workspace
+        # half-generated with no profile, because `check` would then be unable
+        # to run at all and the repository would be stuck. The conflict is still
+        # reported and still makes the command exit non-zero; the lockfile
+        # simply records what was actually written.
         workspace.write_profile(fresh)
         workspace.write_lock(build_lock(fresh, packs, to_locked_outputs(changes)))
 

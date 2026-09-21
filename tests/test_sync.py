@@ -229,13 +229,49 @@ def test_check_before_init_refuses(repo: Path) -> None:
 
 
 def test_a_real_directory_at_the_symlink_path_is_not_replaced(repo: Path) -> None:
-    """Someone's own .claude/skills folder is their work, not ours."""
+    """Someone's own .claude/skills folder is their work, not ours.
+
+    Several real repositories manage skills with a different tool, so this is
+    the common case rather than an edge case.
+    """
     own = repo / ".claude/skills/mine"
     own.mkdir(parents=True)
     (own / "SKILL.md").write_text("mine\n", encoding="utf-8")
 
     assert init(repo) == 1
     assert (own / "SKILL.md").read_text(encoding="utf-8") == "mine\n"
+
+
+def test_a_conflict_still_leaves_a_usable_workspace(repo: Path) -> None:
+    """One optional emitter conflicting must not strand the repository.
+
+    Without the profile and lockfile, `check` cannot run at all, so a repo that
+    merely has its own .claude/skills folder would be permanently stuck.
+    """
+    (repo / ".claude/skills").mkdir(parents=True)
+
+    assert init(repo) == 1
+    assert (repo / ".aidlc/profile.json").exists()
+    assert (repo / ".aidlc/aidlc.lock").exists()
+    assert (repo / "AGENTS.md").exists()
+
+
+def test_claude_md_is_reported_as_shadowing_agents_md(repo: Path) -> None:
+    """A pre-existing CLAUDE.md silently disables AGENTS.md for Claude Code.
+
+    aidlc will not touch the file, but staying quiet about it would leave the
+    generated instructions mysteriously ignored by one tool.
+    """
+    (repo / "CLAUDE.md").write_text("project notes\n", encoding="utf-8")
+    init(repo)
+
+    import json
+
+    profile = json.loads(read(repo, ".aidlc/profile.json"))
+    kinds = {c["kind"] for c in profile["conflicts"]}
+
+    assert "claude_md_shadows_agents_md" in kinds
+    assert read(repo, "CLAUDE.md") == "project notes\n"
 
 
 def test_unknown_config_key_is_rejected_with_the_valid_names(

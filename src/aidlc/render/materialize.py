@@ -176,14 +176,15 @@ def _apply_symlink(root: Path, artifact: Artifact, *, dry_run: bool) -> Change:
             return Change(path=artifact.path, action=Action.UPDATED)
         path.unlink()
     elif path.exists():
-        # A real directory here is somebody's own skills folder. Replacing it
-        # with a link would delete their work.
+        # A real directory here is somebody's own skills folder, often managed
+        # by a different tool. Replacing it with a link would delete their work.
         return Change(
             path=artifact.path,
             action=Action.CONFLICT,
             detail=(
-                f"{artifact.path} exists and is not a symlink. "
-                "Move or remove it if you want aidlc to manage it."
+                f"{artifact.path} exists and is not a symlink, so another tool "
+                "is probably managing it. Either move it aside, or set "
+                "`emit: {skills: false}` in .aidlc/config.yml to leave skills alone."
             ),
         )
 

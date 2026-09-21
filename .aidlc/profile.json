@@ -17,9 +17,11 @@
     {
       "ecosystem": "python",
       "facts": {
+        "installable": true,
         "layout": "src",
         "linter": "ruff",
         "lockfile": "uv.lock",
+        "requirements": false,
         "test_framework": "pytest",
         "type_checker": "pyright"
       },

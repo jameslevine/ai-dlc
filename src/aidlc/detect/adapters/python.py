@@ -80,6 +80,9 @@ class PythonAdapter:
             "test_framework": "pytest" if self._has_pytest(tool, dependencies) else None,
             "linter": "ruff" if "ruff" in tool else None,
             "lockfile": lockfile,
+            "requirements": index.has(prefix + "requirements.txt"),
+            "installable": bool(pyproject.get("project") or pyproject.get("tool", {}).get("poetry"))
+            or index.has(prefix + "setup.py"),
         }
         facts.declared_steps = steps_from_makefile(index, directory)
         return facts
@@ -155,11 +158,15 @@ class PythonAdapter:
             run = "poetry run "
             setup = SetupKind.NONE
         else:
-            install = (
-                "python -m pip install -r requirements.txt"
-                if facts.facts.get("lockfile") is None
-                else "python -m pip install -e ."
-            )
+            # Install from whatever this project actually has. Emitting
+            # `-r requirements.txt` for a project that has none produces CI
+            # that fails on its first step, which is worse than no CI at all.
+            if facts.facts.get("requirements"):
+                install = "python -m pip install -r requirements.txt"
+            elif facts.facts.get("installable"):
+                install = "python -m pip install -e ."
+            else:
+                install = ""
             run = ""
             setup = SetupKind.NONE
 

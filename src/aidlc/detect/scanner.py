@@ -66,6 +66,17 @@ DEFAULT_IGNORE_DIRS: frozenset[str] = frozenset(
         "__fixtures__",
         "__snapshots__",
         "__mocks__",
+        # Agent tooling. These hold instructions, skills and their bundled
+        # templates, and a skill that ships an example project would otherwise
+        # be detected as a buildable target of the repository hosting it.
+        ".agents",
+        ".aidlc",
+        ".claude",
+        ".codex",
+        ".copilot",
+        ".cursor",
+        ".windsurf",
+        ".gemini",
     }
 )
 

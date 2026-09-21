@@ -54,6 +54,21 @@ def test_scanner_prunes_conventional_test_data_directories(tmp_path: Path) -> No
     assert [t.path for t in profile.targets] == ["."]
 
 
+def test_scanner_prunes_agent_tooling_directories(tmp_path: Path) -> None:
+    """A skill's bundled example project is not a target of the host repo.
+
+    Found on a real repository: a skill shipping an example Next.js app under
+    .agents/skills/<name>/templates/ was detected as a second Node target.
+    """
+    template = tmp_path / ".agents/skills/some-skill/templates/example"
+    template.mkdir(parents=True)
+    (template / "package.json").write_text('{"name": "example"}', encoding="utf-8")
+    (tmp_path / "go.mod").write_text("module real\n\ngo 1.24\n", encoding="utf-8")
+
+    profile = detect(tmp_path)
+    assert [t.path for t in profile.targets] == ["."]
+
+
 def test_detect_ignore_prunes_a_project_specific_directory(tmp_path: Path) -> None:
     """The escape hatch for conventions too local to prune by default."""
     nested = tmp_path / "fixtures" / "sample"
@@ -134,6 +149,28 @@ def test_react_selects_the_react_pack() -> None:
 def test_jvm_selects_the_java_pack() -> None:
     profile = profile_for("jvm-maven")
     assert "rules-java" in profile.packs_selected
+
+
+def test_pip_project_without_requirements_does_not_reference_one(tmp_path: Path) -> None:
+    """Emitting `-r requirements.txt` for a project that has none produces CI
+    that fails on its first step, which is worse than generating no CI."""
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "x"\nversion = "0.1.0"\nrequires-python = ">=3.12"\n',
+        encoding="utf-8",
+    )
+    profile = detect(tmp_path)
+    install = step_command(profile, ".", StepName.INSTALL)
+
+    assert install == "python -m pip install -e ."
+
+
+def test_pip_project_with_requirements_uses_it(tmp_path: Path) -> None:
+    (tmp_path / "requirements.txt").write_text("httpx\n", encoding="utf-8")
+    profile = detect(tmp_path)
+
+    assert step_command(profile, ".", StepName.INSTALL) == (
+        "python -m pip install -r requirements.txt"
+    )
 
 
 def test_python_poetry_project_uses_poetry_commands() -> None:
