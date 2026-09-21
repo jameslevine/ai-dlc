@@ -1,0 +1,30 @@
+# Fast, local-only hooks. Anything needing network or credentials belongs in CI,
+# not in a pre-commit hook that runs on every commit.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-toml
+      - id: check-yaml
+        # Workflow files use YAML tags this checker does not model.
+        exclude: ^\.github/workflows/
+      - id: check-merge-conflict
+
+  - repo: local
+    hooks:
+      # Dogfood: this repo's own generated files must not drift.
+      - id: aidlc-check
+        name: aidlc check
+        entry: uv run aidlc check
+        language: system
+        pass_filenames: false
+        files: ^(packs/|\.aidlc/|AGENTS\.md)

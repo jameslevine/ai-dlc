@@ -1,0 +1,83 @@
+[project]
+name = "aidlc"
+version = "0.1.0"
+description = "A versioned, tool-agnostic AI development lifecycle: one source of truth for agent instructions, CI/CD and quality measurement."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "James Levine" }]
+keywords = ["agents", "agents-md", "ci", "developer-tools", "llm"]
+
+# Kept deliberately small. The CLI must import fast and work offline.
+# Model and eval dependencies live in the [project.optional-dependencies] extras
+# below so that `init`/`sync`/`check` never pull an LLM SDK.
+dependencies = [
+    "cyclopts>=3.0",
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# `uv tool install "aidlc[evals]"` — only needed to run judged evals.
+evals = [
+    "litellm>=1.50",
+    "duckdb>=1.1",
+]
+# Only needed for `aidlc metrics` against the GitHub API.
+metrics = [
+    "httpx>=0.27",
+    "duckdb>=1.1",
+]
+
+[project.scripts]
+aidlc = "aidlc.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aidlc"]
+
+# The content packs ship inside the wheel as package data so that a
+# `uv tool install` of the CLI carries its builtin packs with it. They are read
+# via importlib.resources, never via __file__ path arithmetic.
+[tool.hatch.build.targets.wheel.force-include]
+"packs" = "aidlc/_packs"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.16",
+    "pyright>=1.1.400",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+# Fixture repos are deliberately odd-shaped; they are data, not code.
+"tests/fixtures/**" = ["ALL"]
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["tests/fixtures", "**/__pycache__"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+reportMissingImports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Model-touching tests are opt-in: the default suite must pass with no
+# credentials of any kind. Run them with `pytest -m model`.
+addopts = "-m 'not model' --strict-markers"
+markers = [
+    "model: requires a reachable model provider (deselected by default)",
+    "network: requires network access (deselected by default)",
+]

@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# CDK
+infra/cdk.out/
+infra/.venv/
+
+# Local eval output — the durable copy lives in S3
+.aidlc-runs/
+*.local.jsonl
+
+# OS
+.DS_Store

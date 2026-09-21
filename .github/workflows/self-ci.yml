@@ -1,0 +1,66 @@
+# This repo's own quality gate.
+#
+# At M2 this becomes a thin caller of our own `aidlc-ci.yml` dispatcher, so the
+# platform is tested by being used. Until that exists, the steps are inline.
+#
+# Every third-party action is pinned by commit SHA with the tag in a trailing
+# comment. Tags move; SHAs do not. `astral-sh/setup-uv` in particular stopped
+# publishing moving major tags at v8, so `@v10` does not even resolve.
+name: self-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: self-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+          cache-dependency-glob: uv.lock
+
+      - name: Install
+        run: uv sync --locked
+
+      - name: ruff check
+        run: uv run ruff check .
+
+      - name: ruff format
+        run: uv run ruff format --check .
+
+      - name: pyright
+        run: uv run pyright
+
+      # The default marker expression deselects anything needing a model or the
+      # network, so this job never needs a credential of any kind.
+      - name: pytest
+        run: uv run pytest
+
+      # The machine-portability promise, enforced rather than asserted: the
+      # whole CLI runs with no AWS configuration present and still succeeds.
+      - name: doctor runs clean with no credentials
+        env:
+          AWS_PROFILE: ""
+          AWS_REGION: ""
+          AWS_ACCESS_KEY_ID: ""
+          ANTHROPIC_API_KEY: ""
+          OPENAI_API_KEY: ""
+        run: uv run aidlc doctor
