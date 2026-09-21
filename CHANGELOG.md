@@ -34,3 +34,13 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   configuration fan-out. No CLAUDE.md and no slash commands are generated.
 - `aidlc init`, `aidlc sync` and `aidlc check`, with managed blocks that refuse
   to overwrite hand edits, and a committed profile and lockfile.
+- Reusable workflows: `aidlc-ci.yml` (the dispatcher consumers call),
+  `reusable-lang-ci.yml` (one generic build workflow for all six ecosystems)
+  and `reusable-secret-scan.yml`.
+- `aidlc ci matrix`, which turns a committed profile into a build matrix.
+- A generated caller workflow of about twenty lines, pinned to the platform's
+  major tag and declaring its own permissions.
+- `release.yml`, which rewrites internal workflow references to the release
+  commit SHA before tagging, and refuses to tag if any remain unpinned.
+- `VERSIONING.md`, covering the two tag namespaces and the breaking-change
+  process.

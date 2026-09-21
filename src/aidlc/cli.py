@@ -73,6 +73,18 @@ def check_command(path: PathArg = None) -> int:
     return check(path)
 
 
+ci = App(name="ci", help="Commands used by the generated CI workflows.")
+app.command(ci)
+
+
+@ci.command(name="matrix")
+def ci_matrix_command(path: PathArg = None) -> int:
+    """Emit the build matrix for this repository's committed profile."""
+    from aidlc.commands.ci import matrix
+
+    return matrix(path)
+
+
 def main() -> int:
     """Console-script entry point.
 

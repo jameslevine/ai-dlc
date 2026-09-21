@@ -1,0 +1,79 @@
+# The workflow consumer repositories call.
+#
+# It reads the committed profile, builds a matrix from it, and dispatches each
+# target to the generic build workflow.
+#
+# EVERY INTERNAL `uses:` IS FULLY QUALIFIED, AND THAT IS NOT A STYLE CHOICE.
+# A relative `uses: ./.github/workflows/x.yml` inside a called workflow
+# resolves against the CALLER's repository, not this one. If the caller happens
+# to have a file at the same path it is silently used instead of ours, with no
+# error. The refs below are rewritten to the release commit SHA by release.yml;
+# `uses:` cannot take an expression, so they must be literal.
+name: aidlc CI
+
+on:
+  workflow_call:
+    inputs:
+      strictness:
+        description: >-
+          standard treats profile drift as a warning; strict fails the build.
+          Overridden by `strictness` in .aidlc/config.yml when that is stricter.
+        type: string
+        required: false
+        default: standard
+      secret-scan:
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+      any: ${{ steps.build.outputs.any }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: jameslevine/ai-dlc/.github/actions/setup-aidlc@main # aidlc:pin
+
+      # The profile is committed, so it can be stale. Re-detect and compare
+      # before trusting it. Without this step the committed profile is an
+      # unverifiable claim, and CI would keep building a shape the repository
+      # no longer has.
+      - name: Check for drift
+        run: aidlc check
+
+      - name: Build matrix
+        id: build
+        run: aidlc ci matrix
+
+  build:
+    needs: plan
+    # An empty matrix is a workflow error rather than a no-op, so the guard is
+    # required and not merely tidy.
+    if: needs.plan.outputs.any == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: jameslevine/ai-dlc/.github/workflows/reusable-lang-ci.yml@main # aidlc:pin
+    with:
+      name: ${{ matrix.name }}
+      setup: ${{ matrix.setup }}
+      version: ${{ matrix.version }}
+      working-directory: ${{ matrix.target }}
+      cache: ${{ matrix.cache }}
+      install: ${{ matrix.install }}
+      lint: ${{ matrix.lint }}
+      format: ${{ matrix.format }}
+      typecheck: ${{ matrix.typecheck }}
+      test: ${{ matrix.test }}
+      build: ${{ matrix.build }}
+
+  secret-scan:
+    if: inputs.secret-scan
+    uses: jameslevine/ai-dlc/.github/workflows/reusable-secret-scan.yml@main # aidlc:pin

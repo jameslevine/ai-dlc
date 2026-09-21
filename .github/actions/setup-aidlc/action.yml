@@ -1,0 +1,42 @@
+name: Set up aidlc
+description: Install uv and the aidlc CLI at a pinned version.
+
+inputs:
+  version:
+    description: >-
+      Git ref of the aidlc release to install. Defaults to the ref this
+      workflow was called at, so a consumer pinning the platform to a tag gets
+      the CLI from that same tag.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        enable-cache: true
+
+    - name: Install aidlc
+      shell: bash
+      env:
+        # `job.workflow_ref` names the workflow that is running, including the
+        # ref it was called at. Using it means the CLI version always matches
+        # the platform version a consumer pinned, with nothing to keep in sync
+        # by hand.
+        REQUESTED: ${{ inputs.version }}
+        WORKFLOW_REF: ${{ github.job_workflow_ref }}
+      run: |
+        set -euo pipefail
+        ref="${REQUESTED}"
+        if [ -z "$ref" ]; then
+          # Shape: owner/repo/.github/workflows/file.yml@refs/tags/v1
+          ref="${WORKFLOW_REF##*@}"
+        fi
+        if [ -z "$ref" ]; then
+          echo "::error::could not determine which aidlc version to install" >&2
+          exit 1
+        fi
+        echo "Installing aidlc at ${ref}"
+        uv tool install "git+https://github.com/jameslevine/ai-dlc@${ref}"
+        aidlc --version

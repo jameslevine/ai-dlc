@@ -1,0 +1,81 @@
+# Cut a release: rewrite internal refs to a commit SHA, then tag.
+#
+# The rewrite is the point of this workflow, not a detail of it. Internal
+# `uses:` refs must be fully qualified (a relative path would resolve against
+# the caller's repository) and cannot contain an expression, so on `main` they
+# point at `main`. Tagging without rewriting would produce a `v1` whose
+# workflows still execute whatever `main` says today, making the pin worthless.
+#
+# See VERSIONING.md.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, e.g. 1.2.0 (no leading v).
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Verify the working tree is clean and tests pass
+        run: |
+          uv sync --locked
+          uv run pytest
+          uv run aidlc check
+
+      - name: Pin internal references to this commit
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Rewrite the ref on every line marked `# aidlc:pin`.
+          find .github/workflows -name '*.yml' -print0 |
+            xargs -0 sed -i -E "s|(uses: jameslevine/ai-dlc/[^@]+)@[^ ]+( # aidlc:pin)|\1@${SHA}\2|"
+
+          echo "Rewritten references:"
+          grep -rn 'aidlc:pin' .github/workflows || true
+
+          # A remaining `@main` on a pinned line means the rewrite missed it,
+          # which would ship a release that silently tracks main.
+          if grep -rn 'aidlc:pin' .github/workflows | grep -q '@main'; then
+            echo "::error::a pinned reference still points at main" >&2
+            exit 1
+          fi
+
+          # A relative internal reference would resolve against the consumer's
+          # repository. This must never ship.
+          if grep -rnE '^\s*uses: \./' .github/workflows; then
+            echo "::error::relative uses: found; these resolve against the caller" >&2
+            exit 1
+          fi
+
+      - name: Tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          major="v${VERSION%%.*}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "release: v${VERSION}"
+
+          # The exact version is immutable; the major moves so that consumers
+          # pinning @v1 receive this release without changing anything.
+          git tag "v${VERSION}"
+          git tag -f "$major"
+          git push origin "v${VERSION}"
+          git push origin -f "$major"

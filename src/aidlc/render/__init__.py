@@ -25,6 +25,7 @@ from aidlc.render.emitters import (
     mcp_artifacts,
     skill_artifacts,
 )
+from aidlc.render.workflow import workflow_artifact
 from aidlc.schemas.config import Config
 from aidlc.schemas.profile import Profile
 
@@ -40,6 +41,13 @@ def plan(packs: list[Pack], profile: Profile, config: Config) -> list[Artifact]:
     """
     version = _combined_version(packs)
     artifacts: list[Artifact] = [agents_md(packs, profile, version)]
+
+    # The caller workflow is emitted only for repositories hosted on GitHub
+    # and only when there is something to build. Writing a workflow into a
+    # repository with no targets would add a permanently green check that
+    # verifies nothing.
+    if profile.vcs.host == "github" and profile.targets:
+        artifacts.append(workflow_artifact(strictness=config.strictness.value))
 
     if config.emit.cursor:
         artifacts.extend(cursor_rules(packs))

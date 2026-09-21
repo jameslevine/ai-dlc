@@ -55,10 +55,24 @@ jobs:
         run: uv run pytest
 
       # Dogfood: this repo's own generated files must match its packs. The
-      # same command runs as a pre-commit hook and, from M2, as the first step
-      # of the CI dispatcher in every consumer repository.
+      # same command runs as a pre-commit hook and as the first step of the
+      # dispatcher in every consumer repository.
       - name: aidlc check
         run: uv run aidlc check
+
+      # actionlint catches what YAML parsing cannot: undefined contexts,
+      # invalid expressions, shell errors inside `run:` blocks. The download
+      # script is pinned to a tag rather than main, since it is fetched over
+      # the network and piped into bash.
+      - name: actionlint
+        if: matrix.python-version == '3.13'
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash \
+            -o download-actionlint.bash
+          bash download-actionlint.bash 1.7.12
+          ./actionlint -color .github/workflows/*.yml
 
       # The machine-portability promise, enforced rather than asserted: the
       # whole CLI runs with no AWS configuration present and still succeeds.

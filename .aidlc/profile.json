@@ -3,6 +3,26 @@
     {
       "kind": "existing_workflow",
       "note": "Pre-existing workflow. aidlc will not modify it.",
+      "path": ".github/workflows/aidlc-ci.yml"
+    },
+    {
+      "kind": "existing_workflow",
+      "note": "Pre-existing workflow. aidlc will not modify it.",
+      "path": ".github/workflows/release.yml"
+    },
+    {
+      "kind": "existing_workflow",
+      "note": "Pre-existing workflow. aidlc will not modify it.",
+      "path": ".github/workflows/reusable-lang-ci.yml"
+    },
+    {
+      "kind": "existing_workflow",
+      "note": "Pre-existing workflow. aidlc will not modify it.",
+      "path": ".github/workflows/reusable-secret-scan.yml"
+    },
+    {
+      "kind": "existing_workflow",
+      "note": "Pre-existing workflow. aidlc will not modify it.",
       "path": ".github/workflows/self-ci.yml"
     }
   ],
