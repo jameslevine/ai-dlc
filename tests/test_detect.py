@@ -37,6 +37,36 @@ def test_scanner_prunes_dependency_directories() -> None:
     assert not any(".venv" in path for path in index.files)
 
 
+def test_scanner_prunes_conventional_test_data_directories(tmp_path: Path) -> None:
+    """A repository's own fixtures must not become CI targets.
+
+    Without this, running aidlc on any project with test data generates jobs
+    that build synthetic manifests, verifying nothing. `testdata` is ignored by
+    the Go toolchain itself, so pruning it by default is uncontroversial.
+    """
+    for directory in ("testdata", "__fixtures__", "__mocks__"):
+        nested = tmp_path / directory / "sample"
+        nested.mkdir(parents=True)
+        (nested / "go.mod").write_text("module x\n\ngo 1.24\n", encoding="utf-8")
+    (tmp_path / "go.mod").write_text("module real\n\ngo 1.24\n", encoding="utf-8")
+
+    profile = detect(tmp_path)
+    assert [t.path for t in profile.targets] == ["."]
+
+
+def test_detect_ignore_prunes_a_project_specific_directory(tmp_path: Path) -> None:
+    """The escape hatch for conventions too local to prune by default."""
+    nested = tmp_path / "fixtures" / "sample"
+    nested.mkdir(parents=True)
+    (nested / "go.mod").write_text("module x\n\ngo 1.24\n", encoding="utf-8")
+    (tmp_path / "go.mod").write_text("module real\n\ngo 1.24\n", encoding="utf-8")
+
+    assert len(detect(tmp_path).targets) == 2
+
+    config = Config.model_validate({"schema": 1, "detect": {"ignore": ["fixtures"]}})
+    assert [t.path for t in detect(tmp_path, config).targets] == ["."]
+
+
 def test_scanner_tolerates_a_malformed_manifest(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text("this is not [ valid toml", encoding="utf-8")
     index = scan(tmp_path)
@@ -75,9 +105,35 @@ def test_python_uv_project() -> None:
 def test_python_frameworks_select_rule_packs() -> None:
     profile = profile_for("python-uv")
     assert "fastapi" in profile.targets[0].frameworks
-    assert "rules-fastapi" in profile.packs_selected
     assert "rules-python" in profile.packs_selected
     assert "core" in profile.packs_selected
+
+
+def test_auto_selection_skips_packs_that_are_not_installed() -> None:
+    """The framework table names packs that may not be written yet.
+
+    Selecting one that does not exist would make detection fail on a perfectly
+    valid repository, so automatic selection is filtered against what ships.
+    An explicit list in config is deliberately *not* filtered: a name someone
+    typed is intent, and a typo in it should fail loudly.
+    """
+    from aidlc.packs.loader import available_builtin
+
+    profile = profile_for("python-uv")
+    installed = set(available_builtin())
+
+    assert set(profile.packs_selected) <= installed
+    assert "fastapi" in profile.targets[0].frameworks, "the hint is still recorded"
+
+
+def test_react_selects_the_react_pack() -> None:
+    profile = profile_for("node-react")
+    assert "rules-react" in profile.packs_selected
+
+
+def test_jvm_selects_the_java_pack() -> None:
+    profile = profile_for("jvm-maven")
+    assert "rules-java" in profile.packs_selected
 
 
 def test_python_poetry_project_uses_poetry_commands() -> None:

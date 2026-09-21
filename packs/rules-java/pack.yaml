@@ -1,0 +1,15 @@
+name: rules-java
+version: 0.1.0
+kind: rules
+summary: "JVM conventions: nullability, immutability and exception handling."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  ecosystems: [jvm]
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

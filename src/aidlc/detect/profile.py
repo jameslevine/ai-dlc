@@ -13,6 +13,7 @@ from aidlc import __version__, probe
 from aidlc.detect.adapters import ADAPTERS, by_id
 from aidlc.detect.adapters.base import TargetFacts, make_job
 from aidlc.detect.scanner import RepoIndex, scan
+from aidlc.packs.loader import available_builtin
 from aidlc.schemas.config import Config, TargetOverride
 from aidlc.schemas.profile import (
     Conflict,
@@ -146,7 +147,13 @@ def _select_packs(targets: list[Target], config: Config) -> list[str]:
     """Choose rule packs from what was detected.
 
     An explicit `packs` list in config replaces this entirely rather than
-    adding to it, so that a repository can opt out of a pack it dislikes.
+    adding to it, so that a repository can opt out of a pack it dislikes. It is
+    also *not* filtered against what is installed: a name someone typed is a
+    statement of intent, and a typo in it should fail loudly.
+
+    Automatic selection is filtered, because the ecosystem and framework tables
+    name packs that may not be written yet. Selecting a pack that does not
+    exist would make detection fail on a perfectly valid repository.
     """
     if config.packs is not None:
         return list(config.packs)
@@ -155,13 +162,14 @@ def _select_packs(targets: list[Target], config: Config) -> list[str]:
     for target in targets:
         for pack in _ECOSYSTEM_PACKS.get(target.ecosystem, ()):
             selected.setdefault(pack, None)
+        # Infrastructure rules are language-independent: a CDK app written in
+        # TypeScript wants the same guidance as one written in Python.
         for framework in target.frameworks:
             if pack := _FRAMEWORK_PACKS.get(framework):
                 selected.setdefault(pack, None)
 
-    # Infrastructure rules are language-independent: a CDK app written in
-    # TypeScript wants the same guidance as one written in Python.
-    return list(selected)
+    installed = set(available_builtin())
+    return [name for name in selected if name in installed]
 
 
 def _conflicts(index: RepoIndex) -> list[Conflict]:

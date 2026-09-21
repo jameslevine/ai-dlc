@@ -1,0 +1,72 @@
+{
+  "aidlc": "0.1.0",
+  "outputs": [
+    {
+      "kind": "file",
+      "path": ".agents/skills/build/SKILL.md",
+      "sha256": "c242e58dc9f1b20d69d22c5b659f5cc011a037598d675bd83166d62451780f46"
+    },
+    {
+      "kind": "file",
+      "path": ".agents/skills/plan/SKILL.md",
+      "sha256": "c0416140a855964b7eca08f59cf1f7e0553b09c6621a4730717fad0b0a3571d3"
+    },
+    {
+      "kind": "file",
+      "path": ".agents/skills/review/SKILL.md",
+      "sha256": "7cc4f721c0b7562d3934c40d3f8256c887c4b01af8d334c17c549e4da1924d53"
+    },
+    {
+      "kind": "file",
+      "path": ".cursor/rules/rules-python-dependencies.mdc",
+      "sha256": "c1e6f90298fb51d53c3d604d9d4264bb5770c8cbc89bf7b90c1c56820999282a"
+    },
+    {
+      "kind": "file",
+      "path": ".cursor/rules/rules-python-tests.mdc",
+      "sha256": "58587362fcf05301a9f70c5082b526ed25c4f527f2a75ab7bca8b5d235198271"
+    },
+    {
+      "kind": "file",
+      "path": ".cursor/rules/rules-python-typing.mdc",
+      "sha256": "a8781da1cb9ace0c3841ad65cb78b4aa0daf1dedde25d5d9dc86b36d07d9f7f5"
+    },
+    {
+      "kind": "file",
+      "path": ".github/instructions/rules-python-dependencies.instructions.md",
+      "sha256": "2e06512aefcea4fe25af5c411ef659d89d0957113e78772fff3defcb58668c2d"
+    },
+    {
+      "kind": "file",
+      "path": ".github/instructions/rules-python-tests.instructions.md",
+      "sha256": "076b99115f6d5ed825f80d8b11724b0ce1fa8364cbcdb07253ade86d7cd25a0a"
+    },
+    {
+      "kind": "file",
+      "path": ".github/instructions/rules-python-typing.instructions.md",
+      "sha256": "45f789415389137914e19d2ad8fbf036598c6ea2dbaf98132491e91bfbb11001"
+    },
+    {
+      "identifier": "core",
+      "kind": "block",
+      "path": "AGENTS.md",
+      "sha256": "sha256:557712bb46afc483"
+    }
+  ],
+  "packs": [
+    {
+      "digest": "sha256:0c51ac433c930a724562e72b48273bb0",
+      "name": "core",
+      "source": "builtin",
+      "version": "0.1.0"
+    },
+    {
+      "digest": "sha256:d8c2e0e50294bd5361b760e5f80eb549",
+      "name": "rules-python",
+      "source": "builtin",
+      "version": "0.1.0"
+    }
+  ],
+  "profile_digest": "sha256:e2ed9b24e84a873f",
+  "schema": 1
+}

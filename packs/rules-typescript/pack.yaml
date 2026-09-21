@@ -1,0 +1,15 @@
+name: rules-typescript
+version: 0.1.0
+kind: rules
+summary: "TypeScript and JavaScript conventions: types, modules and test style."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  ecosystems: [node]
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

@@ -1,0 +1,22 @@
+# aidlc configuration. Every key is optional; absent means platform defaults.
+#
+# strictness: standard | strict   (strict fails CI on profile drift)
+# packs:      explicit pack list; omit to let detection choose
+# pins:       exact pack versions, e.g. {rules-python: "1.2.0"}
+# emit:       {skills: true, cursor: true, copilot: true, mcp: true}
+# detect:     {ignore: ["vendor"]}
+# targets:    per-directory overrides, and the escape hatch for any language
+# mcp:        MCP servers, fanned out to every client's own config format
+
+schema: 1
+
+# This repository's own shape has settled, so drift is an error rather than a
+# warning. aidlc holds itself to the stricter setting it offers.
+strictness: strict
+
+detect:
+  # tests/fixtures holds whole synthetic repositories in six languages. They
+  # are test data, not targets: generating CI to build them would produce jobs
+  # that verify nothing. `fixtures` is not a universal enough convention to
+  # prune by default, which is exactly what this key is for.
+  ignore: ["fixtures"]

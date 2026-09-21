@@ -57,6 +57,15 @@ DEFAULT_IGNORE_DIRS: frozenset[str] = frozenset(
         ".cargo",
         ".dart_tool",
         "Pods",
+        # Test data that frequently contains whole manifests. Without these, a
+        # repository's own fixtures are detected as buildable targets and CI is
+        # generated to build them. Only names that are unambiguous conventions
+        # appear here; `testdata` is ignored by the Go toolchain itself. For
+        # anything less standard, use `detect.ignore` in .aidlc/config.yml.
+        "testdata",
+        "__fixtures__",
+        "__snapshots__",
+        "__mocks__",
     }
 )
 

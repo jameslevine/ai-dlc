@@ -1,0 +1,15 @@
+name: rules-react
+version: 0.1.0
+kind: rules
+summary: "React conventions: component boundaries, state and effects."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  frameworks: [react, next]
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

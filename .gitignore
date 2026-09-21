@@ -1,10 +1,12 @@
 # Python
+# Anchored to the repository root on purpose: an unanchored `build/` also
+# matches packs/core/skills/build/, silently excluding shipped content.
 __pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
-dist/
-build/
+/dist/
+/build/
 
 # Tooling caches
 .ruff_cache/

@@ -1,0 +1,72 @@
+{
+  "conflicts": [
+    {
+      "kind": "existing_workflow",
+      "note": "Pre-existing workflow. aidlc will not modify it.",
+      "path": ".github/workflows/self-ci.yml"
+    }
+  ],
+  "generated_by": "aidlc 0.1.0",
+  "packs_selected": [
+    "core",
+    "rules-python"
+  ],
+  "root": ".",
+  "schema": 1,
+  "targets": [
+    {
+      "ecosystem": "python",
+      "facts": {
+        "layout": "src",
+        "linter": "ruff",
+        "lockfile": "uv.lock",
+        "test_framework": "pytest",
+        "type_checker": "pyright"
+      },
+      "frameworks": [
+        "pydantic"
+      ],
+      "job": {
+        "cache_dependency_glob": "uv.lock",
+        "setup": "uv",
+        "steps": [
+          {
+            "command": "uv sync --locked",
+            "name": "install",
+            "source": "default"
+          },
+          {
+            "command": "uv run ruff check .",
+            "name": "lint",
+            "source": "default"
+          },
+          {
+            "command": "uv run ruff format --check .",
+            "name": "format",
+            "source": "default"
+          },
+          {
+            "command": "uv run pyright",
+            "name": "typecheck",
+            "source": "default"
+          },
+          {
+            "command": "uv run pytest",
+            "name": "test",
+            "source": "default"
+          }
+        ],
+        "versions": [
+          "3.12"
+        ],
+        "working_directory": "."
+      },
+      "languages": [
+        "Python"
+      ],
+      "manager": "uv",
+      "path": "."
+    }
+  ],
+  "vcs": {}
+}

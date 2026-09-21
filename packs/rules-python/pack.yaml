@@ -1,0 +1,15 @@
+name: rules-python
+version: 0.1.0
+kind: rules
+summary: "Python conventions: uv, ruff, typing and test structure."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  ecosystems: [python]
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

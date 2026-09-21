@@ -54,6 +54,12 @@ jobs:
       - name: pytest
         run: uv run pytest
 
+      # Dogfood: this repo's own generated files must match its packs. The
+      # same command runs as a pre-commit hook and, from M2, as the first step
+      # of the CI dispatcher in every consumer repository.
+      - name: aidlc check
+        run: uv run aidlc check
+
       # The machine-portability promise, enforced rather than asserted: the
       # whole CLI runs with no AWS configuration present and still succeeds.
       - name: doctor runs clean with no credentials
