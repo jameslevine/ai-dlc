@@ -60,6 +60,12 @@ jobs:
       - name: aidlc check
         run: uv run aidlc check
 
+      # Tier-1 evals: deterministic, free, and the only thing standing between
+      # a rule set and unbounded growth. The token figure printed here is the
+      # number to watch over time.
+      - name: aidlc eval
+        run: uv run aidlc eval
+
       # actionlint catches what YAML parsing cannot: undefined contexts,
       # invalid expressions, shell errors inside `run:` blocks. The download
       # script is pinned to a tag rather than main, since it is fetched over

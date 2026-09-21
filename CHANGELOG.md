@@ -44,3 +44,7 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   commit SHA before tagging, and refuses to tag if any remain unpinned.
 - `VERSIONING.md`, covering the two tag namespaces and the breaking-change
   process.
+- `aidlc eval --tier 1`: deterministic checks that run on every commit. A
+  token budget on the always-loaded context, plus detection of rules that are
+  unreachable, duplicated, or match no file in the repository. Reports the
+  estimated context cost whether or not anything fails.

@@ -73,6 +73,21 @@ def check_command(path: PathArg = None) -> int:
     return check(path)
 
 
+@app.command(name="eval")
+def eval_command(
+    path: PathArg = None,
+    *,
+    tier: Annotated[int, Parameter(help="1 is deterministic and free.")] = 1,
+    budget: Annotated[
+        int, Parameter(help="Estimated token ceiling for the always-on context.")
+    ] = 1500,
+) -> int:
+    """Check whether the rule set is earning its context budget."""
+    from aidlc.commands.evaluate import evaluate
+
+    return evaluate(path, tier=tier, budget=budget)
+
+
 ci = App(name="ci", help="Commands used by the generated CI workflows.")
 app.command(ci)
 
