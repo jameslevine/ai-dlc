@@ -1,0 +1,15 @@
+name: rules-security
+version: 0.1.0
+kind: rules
+summary: "Security basics that apply to every repository: secrets, input validation and supply chain."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  always: true
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

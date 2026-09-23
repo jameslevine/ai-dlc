@@ -118,10 +118,17 @@ def test_python_uv_project() -> None:
 
 
 def test_python_frameworks_select_rule_packs() -> None:
+    """`fastapi` brings its own pack and observability; `boto3` brings AWS."""
     profile = profile_for("python-uv")
-    assert "fastapi" in profile.targets[0].frameworks
-    assert "rules-python" in profile.packs_selected
-    assert "core" in profile.packs_selected
+    assert profile.targets[0].frameworks == ["aws", "fastapi"]
+    assert profile.packs_selected == [
+        "core",
+        "rules-security",
+        "rules-python",
+        "rules-aws",
+        "rules-observability",
+        "rules-fastapi",
+    ]
 
 
 def test_auto_selection_skips_packs_that_are_not_installed() -> None:
@@ -132,18 +139,44 @@ def test_auto_selection_skips_packs_that_are_not_installed() -> None:
     An explicit list in config is deliberately *not* filtered: a name someone
     typed is intent, and a typo in it should fail loudly.
     """
+    from aidlc.detect.profile import _FRAMEWORK_PACKS
     from aidlc.packs.loader import available_builtin
 
-    profile = profile_for("python-uv")
-    installed = set(available_builtin())
+    assert _FRAMEWORK_PACKS["spring-boot"] == ("rules-spring",)
+    assert "rules-spring" not in available_builtin(), "this test needs a genuinely absent pack"
 
-    assert set(profile.packs_selected) <= installed
-    assert "fastapi" in profile.targets[0].frameworks, "the hint is still recorded"
+    profile = profile_for("jvm-maven")
+    assert "spring-boot" in profile.targets[0].frameworks, "the hint is still recorded"
+    assert "rules-spring" not in profile.packs_selected
+    assert set(profile.packs_selected) <= set(available_builtin())
+
+
+def test_security_pack_is_selected_for_every_repository(tmp_path: Path) -> None:
+    """`rules-security` declares `applies_when: always`, and detection must
+    honour that flag from the manifest rather than from a table, so that a
+    repository no adapter recognises still gets it."""
+    for fixture in ("python-uv", "node-react", "jvm-maven", "go-mod", "sam-fastapi"):
+        assert "rules-security" in profile_for(fixture).packs_selected, fixture
+    assert detect(tmp_path).packs_selected == ["core", "rules-security"]
+
+
+def test_universal_packs_come_right_after_core() -> None:
+    profile = profile_for("node-react")
+    assert profile.packs_selected[:2] == ["core", "rules-security"]
 
 
 def test_react_selects_the_react_pack() -> None:
     profile = profile_for("node-react")
     assert "rules-react" in profile.packs_selected
+
+
+def test_plain_react_app_does_not_get_backend_or_infra_packs() -> None:
+    """A frontend with no AWS evidence must not be told how to write IAM."""
+    profile = profile_for("node-react")
+    assert profile.packs_selected == ["core", "rules-security", "rules-typescript", "rules-react"]
+    assert "rules-aws" not in profile.packs_selected
+    assert "rules-fastapi" not in profile.packs_selected
+    assert "rules-observability" not in profile.packs_selected
 
 
 def test_jvm_selects_the_java_pack() -> None:
@@ -394,10 +427,14 @@ def test_cdk_json_alone_is_not_an_infra_target() -> None:
 
 
 def test_aws_and_fastapi_frameworks_map_to_their_packs() -> None:
-    """The table is the contract; the packs it names do not all ship yet, so
-    selection is asserted only as a subset of what is installed."""
+    """The table is the contract, and every pack it names for AWS and FastAPI
+    now ships, so the selection is asserted in full and in order.
+
+    The order is what the packs table produces: `core`, the universal packs,
+    then each target's ecosystem pack and its frameworks alphabetically. The
+    backend target sorts before `infra`, and `aws` sorts before `fastapi`.
+    """
     from aidlc.detect.profile import _FRAMEWORK_PACKS
-    from aidlc.packs.loader import available_builtin
 
     assert _FRAMEWORK_PACKS["fastapi"] == ("rules-fastapi", "rules-observability")
     for framework in ("aws", "aws-cdk", "sam", "cloudformation", "terraform"):
@@ -405,7 +442,14 @@ def test_aws_and_fastapi_frameworks_map_to_their_packs() -> None:
     assert "rules-aws-cdk" not in {pack for packs in _FRAMEWORK_PACKS.values() for pack in packs}
 
     profile = profile_for("sam-fastapi")
-    assert set(profile.packs_selected) <= set(available_builtin())
+    assert profile.packs_selected == [
+        "core",
+        "rules-security",
+        "rules-python",
+        "rules-aws",
+        "rules-observability",
+        "rules-fastapi",
+    ]
 
 
 # -- Monorepo, conflicts, escape hatch ---------------------------------------
@@ -500,7 +544,7 @@ def test_explicit_pack_list_replaces_detection() -> None:
 def test_detect_on_an_empty_directory_is_not_an_error(tmp_path: Path) -> None:
     profile = detect(tmp_path)
     assert profile.targets == []
-    assert profile.packs_selected == ["core"]
+    assert profile.packs_selected == ["core", "rules-security"]
 
 
 @pytest.mark.parametrize(

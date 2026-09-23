@@ -33,6 +33,21 @@
     },
     {
       "kind": "file",
+      "path": ".cursor/rules/rules-security-input-validation.mdc",
+      "sha256": "905608800878913c3316fb0bbab108efc7cdfd369b2bc955b929fd024d94c4fa"
+    },
+    {
+      "kind": "file",
+      "path": ".cursor/rules/rules-security-secrets.mdc",
+      "sha256": "b803e20e88447f40dd728acd643e52d0b92d63fad3392e8c9986df2a503e7aa8"
+    },
+    {
+      "kind": "file",
+      "path": ".cursor/rules/rules-security-supply-chain.mdc",
+      "sha256": "89ab33c61e205322e44f8a5a497f44fb0856c4225c5d82d450fc9a656beb805c"
+    },
+    {
+      "kind": "file",
       "path": ".github/instructions/rules-python-dependencies.instructions.md",
       "sha256": "2e06512aefcea4fe25af5c411ef659d89d0957113e78772fff3defcb58668c2d"
     },
@@ -47,10 +62,25 @@
       "sha256": "45f789415389137914e19d2ad8fbf036598c6ea2dbaf98132491e91bfbb11001"
     },
     {
+      "kind": "file",
+      "path": ".github/instructions/rules-security-input-validation.instructions.md",
+      "sha256": "f59bff86e5ff927d0e8df9958059a143f41cc3821ba3f989151c1da163e664b7"
+    },
+    {
+      "kind": "file",
+      "path": ".github/instructions/rules-security-secrets.instructions.md",
+      "sha256": "855968c73e4a042278ecfe6da1ecb95ae5932ec09ca539902c1c5530080a3876"
+    },
+    {
+      "kind": "file",
+      "path": ".github/instructions/rules-security-supply-chain.instructions.md",
+      "sha256": "706be6762ee29bb52b4db2b293ac9e49a2c1ae792ca2c72ea9020258d7e96ef7"
+    },
+    {
       "identifier": "core",
       "kind": "block",
       "path": "AGENTS.md",
-      "sha256": "sha256:557712bb46afc483"
+      "sha256": "sha256:1c7662e129a369fb"
     }
   ],
   "packs": [
@@ -65,8 +95,14 @@
       "name": "rules-python",
       "source": "builtin",
       "version": "0.1.0"
+    },
+    {
+      "digest": "sha256:9c8f1cf668ed1969e431bad2e293f57d",
+      "name": "rules-security",
+      "source": "builtin",
+      "version": "0.1.0"
     }
   ],
-  "profile_digest": "sha256:7a6356abb1151290",
+  "profile_digest": "sha256:c9f22d2248f2ac1c",
   "schema": 1
 }

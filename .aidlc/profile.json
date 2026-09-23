@@ -29,6 +29,7 @@
   "generated_by": "aidlc 0.1.0",
   "packs_selected": [
     "core",
+    "rules-security",
     "rules-python"
   ],
   "root": ".",

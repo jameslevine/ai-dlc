@@ -1,4 +1,4 @@
-<!-- aidlc:begin id=core version=core@0.1.0+rules-python@0.1.0 digest=sha256:557712bb46afc483 -->
+<!-- aidlc:begin id=core version=core@0.1.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:1c7662e129a369fb -->
 ## This project
 
 **Python**, managed with uv.
@@ -52,6 +52,9 @@ that identifies it.
 
 ## Rules that apply to specific files
 
+- When editing `**/*.py`, `**/*.ts`, `**/*.tsx`: Validate at the boundary with a schema; reject, never coerce.
+- When editing `**/*.py`, `**/*.ts`, `**/*.tsx`, `**/*.y*ml`, `.env*`, `**/*.json`: Secrets never enter the repository.
+- When editing `**/pyproject.toml`, `**/package.json`, `**/uv.lock`, `**/package-lock.json`, `**/pnpm-lock.yaml`, `.github/workflows/*.y*ml`: Frozen installs, pinned actions, and a reason for every dependency.
 - When editing `pyproject.toml`, `uv.lock`, `**/*.py`: Dependencies go through uv, never pip.
 - When editing `tests/**/*.py`, `**/test_*.py`, `**/*_test.py`: Tests state what should be true, not what the code does.
 - When editing `**/*.py`: Annotate at the boundaries and keep the type checker clean.

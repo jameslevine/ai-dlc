@@ -164,3 +164,23 @@ def test_loading_from_a_path_works(tmp_path: Path) -> None:
     assert pack.name == "demo"
     assert pack.source.startswith("path:")
     assert len(pack.rules) == 1
+
+
+# -- the packs written for a serverless web service ---------------------------
+
+
+@pytest.mark.parametrize(
+    "name", ["rules-fastapi", "rules-aws", "rules-observability", "rules-security"]
+)
+def test_service_packs_carry_only_conditional_rules(name: str) -> None:
+    """Each rule costs one index line in AGENTS.md, never a body on every
+    turn. An always-on rule here would be paid for by repositories that never
+    touch the files it is about."""
+    pack = load_builtin(name)
+    assert pack.rules, f"{name} ships no rules"
+    for rule in pack.rules:
+        assert rule.is_conditional, f"{name}:{rule.id} is not glob-scoped"
+
+
+def test_security_pack_declares_itself_universal() -> None:
+    assert load_builtin("rules-security").meta.applies_when.always is True

@@ -13,7 +13,7 @@ from aidlc import __version__, probe
 from aidlc.detect.adapters import ADAPTERS, by_id
 from aidlc.detect.adapters.base import TargetFacts, make_job
 from aidlc.detect.scanner import RepoIndex, scan
-from aidlc.packs.loader import available_builtin
+from aidlc.packs.loader import available_builtin, load_builtin
 from aidlc.schemas.config import Config, TargetOverride
 from aidlc.schemas.profile import (
     Conflict,
@@ -164,7 +164,16 @@ def _select_packs(targets: list[Target], config: Config) -> list[str]:
     if config.packs is not None:
         return list(config.packs)
 
+    installed = available_builtin()
+
+    # `core` first, then any pack whose manifest declares itself universal.
+    # `rules-security` is the case in point: secrets handling and input
+    # validation apply whether or not a single adapter recognised the repo.
     selected: dict[str, None] = {"core": None}
+    for name in installed:
+        if load_builtin(name).meta.applies_when.always:
+            selected.setdefault(name, None)
+
     for target in targets:
         for pack in _ECOSYSTEM_PACKS.get(target.ecosystem, ()):
             selected.setdefault(pack, None)
@@ -174,7 +183,6 @@ def _select_packs(targets: list[Target], config: Config) -> list[str]:
             for pack in _FRAMEWORK_PACKS.get(framework, ()):
                 selected.setdefault(pack, None)
 
-    installed = set(available_builtin())
     return [name for name in selected if name in installed]
 
 

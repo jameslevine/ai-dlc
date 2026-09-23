@@ -1,0 +1,15 @@
+name: rules-fastapi
+version: 0.1.0
+kind: rules
+summary: "FastAPI conventions: routing, validation, errors and the Lambda handler."
+
+requires:
+  aidlc: ">=0.1,<1"
+
+applies_when:
+  frameworks: [fastapi]
+
+emits:
+  - agents_md
+  - cursor_rules
+  - copilot_instructions

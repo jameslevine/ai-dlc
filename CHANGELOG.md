@@ -59,3 +59,11 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 - Python typecheck detection from dependencies: `pyright` or `mypy` declared
   in a dependency group is enough to add the step, so a project no longer
   needs a `[tool.pyright]` table it has nothing to put in.
+- Packs `rules-fastapi`, `rules-aws`, `rules-observability` and
+  `rules-security`, written for a React + FastAPI + SAM service built along
+  the Well-Architected pillars. Every rule is conditional, so each costs one
+  index line in AGENTS.md. `rules-security` declares `applies_when: always`
+  and detection now honours that flag, so it is selected for every repository.
+- `docs/PACK-AUTHORING.md`: pack layout, manifest fields, rule frontmatter
+  and what `always` costs, what `aidlc eval --tier 1` judges, the voice
+  guideline, and how to bump a pack version.
