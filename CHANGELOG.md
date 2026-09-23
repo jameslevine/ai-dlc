@@ -48,3 +48,15 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   token budget on the always-loaded context, plus detection of rules that are
   unreachable, duplicated, or match no file in the repository. Reports the
   estimated context cost whether or not anything fails.
+- Claude Code subagents: a pack can ship `agents/<name>.md`, rendered to
+  `.claude/agents/<name>.md` when the pack emits `claude_agents` and
+  `emit.agents` is on. `core` gains the `reviewer` agent and the `orchestrate`
+  skill.
+- Whole-file outputs now refuse a hand edit on `sync`, as managed blocks
+  already did, by comparing the file against the hash the lockfile recorded.
+
+### Fixed
+
+- Updating a managed block no longer strips the newline after its closing
+  marker, which had `sync` and the end-of-file pre-commit hook taking turns
+  changing AGENTS.md.

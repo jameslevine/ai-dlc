@@ -51,12 +51,16 @@ class EmitConfig(Base):
 
     AGENTS.md itself is not optional: it is the canonical artifact every other
     emitter is derived from, and every major agent reads it.
+
+    The keys are `skills`, `cursor`, `copilot`, `mcp` and `agents`. The last
+    controls Claude Code subagent files under `.claude/agents/`.
     """
 
     skills: bool = True
     cursor: bool = True
     copilot: bool = True
     mcp: bool = True
+    agents: bool = True
 
 
 class DetectConfig(Base):

@@ -30,6 +30,7 @@ class Emit(StrEnum):
     COPILOT_INSTRUCTIONS = "copilot_instructions"
     SKILLS = "skills"
     MCP = "mcp"
+    CLAUDE_AGENTS = "claude_agents"
 
 
 class AppliesWhen(BaseModel):
@@ -102,3 +103,35 @@ class Skill(BaseModel):
     pack: str = ""
     resources: dict[str, bytes] = Field(default_factory=dict)
     """Extra files under the skill directory, keyed by relative path."""
+
+
+class Agent(BaseModel):
+    """A Claude Code subagent: `.claude/agents/<name>.md` with frontmatter.
+
+    Only Claude Code gets these. No other tool has an equivalent format: a
+    subagent is a separate context with its own system prompt, tool grant and
+    model, dispatched by the main session, and neither Cursor nor Copilot
+    expose that. So there is nothing to translate to, and the AGENTS.md index
+    stays the canonical artifact; an agent supplements it for one tool exactly
+    as `.cursor/rules` does for another.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str
+    description: str
+    tools: list[str] = Field(default_factory=list)
+    """Tool names the agent may use. Empty means it inherits every tool the
+    main session has. `mcp__<server>` grants every tool of that MCP server."""
+
+    model: str | None = None
+    """Model alias such as `sonnet`. None inherits the session's model."""
+
+    skills: list[str] = Field(default_factory=list)
+    """Skills preloaded into the agent's context."""
+
+    body: str
+    """The agent's system prompt."""
+
+    pack: str = ""
+    """Owning pack name, for attribution in the generated file's header."""

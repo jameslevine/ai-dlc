@@ -38,7 +38,7 @@ _STARTER_CONFIG = """\
 # strictness: standard | strict   (strict fails CI on profile drift)
 # packs:      explicit pack list; omit to let detection choose
 # pins:       exact pack versions, e.g. {rules-python: "1.2.0"}
-# emit:       {skills: true, cursor: true, copilot: true, mcp: true}
+# emit:       {skills: true, cursor: true, copilot: true, mcp: true, agents: true}
 # detect:     {ignore: ["vendor"]}
 # targets:    per-directory overrides, and the escape hatch for any language
 # mcp:        MCP servers, fanned out to every client's own config format
@@ -81,6 +81,7 @@ def _run(
 
     fresh = detect(root, config)
     stored = workspace.stored_profile()
+    stored_lock = workspace.stored_lock()
     drifted = stored is not None and profile_digest(stored) != profile_digest(fresh)
 
     packs = workspace.packs(fresh.packs_selected)
@@ -92,6 +93,7 @@ def _run(
         dry_run=not write,
         allow_create_blocks=allow_create_blocks,
         force=force,
+        lock=stored_lock,
     )
 
     if write:
@@ -102,7 +104,9 @@ def _run(
         # reported and still makes the command exit non-zero; the lockfile
         # simply records what was actually written.
         workspace.write_profile(fresh)
-        workspace.write_lock(build_lock(fresh, packs, to_locked_outputs(changes)))
+        workspace.write_lock(
+            build_lock(fresh, packs, to_locked_outputs(changes, previous=stored_lock))
+        )
 
     diff = ""
     if drifted and stored is not None:

@@ -1,4 +1,4 @@
-<!-- aidlc:begin id=core version=core@0.1.0+rules-python@0.1.0 digest=sha256:557712bb46afc483 -->
+<!-- aidlc:begin id=core version=core@0.2.0+rules-python@0.1.0 digest=sha256:2ee49e80639c893a -->
 ## This project
 
 **Python**, managed with uv.
@@ -59,6 +59,7 @@ that identifies it.
 ## Available skills
 
 - **build** — Implement an agreed plan while keeping an append-only log of decisions and the corrections a human made to them. Use when starting implementation, or when asked to "build" or "implement" an existing plan.
+- **orchestrate** — Run an agreed plan by dispatching each acceptance criterion to the downstream agent that owns that part of the repository, then reviewing the result. Use when asked to orchestrate, run, or execute a plan across backend, frontend and infrastructure.
 - **plan** — Start a new unit of work by writing a plan the human corrects before any code is written. Use when beginning a feature, a fix, or any change worth more than a single commit, or when asked to "plan" something.
 - **review** — Close out a unit of work by comparing what shipped against what was planned, and turning what was learned into a concrete rule change. Use when finishing a piece of work, before opening a pull request, or when asked to "review" a completed unit.
 <!-- aidlc:end -->

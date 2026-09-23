@@ -73,6 +73,18 @@ def test_new_content_updates_in_place_without_disturbing_the_rest() -> None:
     assert result.text.rstrip().endswith("After.")
 
 
+def test_update_keeps_the_newline_after_the_closing_marker() -> None:
+    """An update must leave the file's final newline where it found it.
+
+    Otherwise an end-of-file fixer puts the newline back on every commit and
+    `sync` strips it again on every run, and the two take turns forever.
+    """
+    result = blocks.upsert(make("old"), "core", "1.0.0", "new")
+
+    assert result.outcome is Outcome.UPDATED
+    assert result.text.endswith("<!-- aidlc:end -->\n")
+
+
 def test_hand_edited_block_is_refused() -> None:
     text = make("original").replace("original", "somebody edited this")
     result = blocks.upsert(text, "core", "1.0.0", "regenerated")
