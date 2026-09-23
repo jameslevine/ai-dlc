@@ -1,5 +1,7 @@
 name: Set up aidlc
-description: Install uv and the aidlc CLI at a pinned version.
+description: >-
+  Install uv and the aidlc CLI at a pinned version, or from the checkout when
+  the platform repository is running its own caller.
 
 inputs:
   version:
@@ -30,10 +32,30 @@ runs:
         # `github.job_workflow_ref` is an OIDC claim, not a context property,
         # and `github.job_workflow_sha` is empty for a reusable workflow called
         # from the same repository. Both installed nothing.
+        #
+        # `github.repository` is the repository the calling workflow runs in,
+        # not the one this action lives in. It tells the platform repository
+        # apart from a consumer.
         REQUESTED: ${{ inputs.version }}
         ACTION_REF: ${{ github.action_ref }}
+        REPOSITORY: ${{ github.repository }}
+        PLATFORM_REPOSITORY: jameslevine/ai-dlc
       run: |
         set -euo pipefail
+        # Dogfooding. When the platform repository runs its own generated
+        # caller, the ref above is the pinned release commit, so `aidlc check`
+        # would compare the checkout against a CLI whose packs are one
+        # release behind: every push that changes a pack goes red until the
+        # next release moves `v1`. Installing from the checkout instead means
+        # the commit under test is the one being exercised. An explicit
+        # `version` input still wins, since it says exactly what to install.
+        # Consumers never take this branch.
+        if [ -z "$REQUESTED" ] && [ "$REPOSITORY" = "$PLATFORM_REPOSITORY" ]; then
+          echo "Installing aidlc from the checkout at ${GITHUB_WORKSPACE} (platform repository)"
+          uv tool install --force "$GITHUB_WORKSPACE"
+          aidlc --version
+          exit 0
+        fi
         ref="${REQUESTED:-${ACTION_REF}}"
         if [ -z "$ref" ]; then
           echo "::error::could not determine which aidlc version to install" >&2

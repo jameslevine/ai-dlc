@@ -11,6 +11,18 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+### Fixed
+
+- `setup-aidlc` installs the CLI from the checkout when the platform
+  repository runs its own generated caller, so `aidlc check` in the `plan`
+  job compares the pushed commit against itself rather than against the
+  release `v1` points to. Before this, every push that changed a pack went
+  red until the next release moved `v1`. Consumers are unaffected: the branch
+  is taken only when `github.repository` is `jameslevine/ai-dlc` and no
+  explicit `version` input is given. Because the caller resolves the action
+  at `@v1`, the fix takes effect for pushes after the release that carries
+  it.
+
 ## [1.1.0] - 2026-09-23
 
 ### Added

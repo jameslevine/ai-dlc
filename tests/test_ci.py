@@ -21,6 +21,7 @@ from aidlc.render.workflow import PLATFORM_REF, PLATFORM_REPO, WORKFLOW_PATH, ca
 
 FIXTURES = Path(__file__).parent / "fixtures"
 WORKFLOWS = Path(__file__).parents[1] / ".github/workflows"
+SETUP_ACTION = Path(__file__).parents[1] / ".github/actions/setup-aidlc/action.yml"
 
 
 @pytest.fixture(autouse=True)
@@ -233,3 +234,40 @@ def test_dispatcher_checks_for_drift_before_building() -> None:
     commands = [step.get("run", "") for step in parsed["jobs"]["plan"]["steps"]]
 
     assert any("aidlc check" in command for command in commands)
+
+
+# -- the setup action --------------------------------------------------------
+
+
+def _install_step() -> dict[str, object]:
+    parsed = yaml.safe_load(SETUP_ACTION.read_text(encoding="utf-8"))
+    return next(step for step in parsed["runs"]["steps"] if step.get("name") == "Install aidlc")
+
+
+def test_setup_action_dogfoods_the_checkout_in_the_platform_repository() -> None:
+    """The platform's own caller pins `@v1`, so without this the `plan` job
+    would check the pushed commit against a CLI one release behind, and
+    every push that changes a pack would go red until the next release."""
+    step = _install_step()
+    env = step["env"]
+    assert isinstance(env, dict)
+    assert env["REPOSITORY"] == "${{ github.repository }}"
+    assert env["PLATFORM_REPOSITORY"] == PLATFORM_REPO
+
+    script = step["run"]
+    assert isinstance(script, str)
+    assert '"$REPOSITORY" = "$PLATFORM_REPOSITORY"' in script
+    assert 'uv tool install --force "$GITHUB_WORKSPACE"' in script
+
+
+def test_setup_action_still_installs_consumers_from_the_pinned_ref() -> None:
+    """Consumers are unaffected: the git-ref path must survive, and the
+    checkout branch must not fire when a version is asked for explicitly."""
+    step = _install_step()
+    script = step["run"]
+    assert isinstance(script, str)
+    assert f'"git+https://github.com/{PLATFORM_REPO}@${{ref}}"' in script
+    assert 'ref="${REQUESTED:-${ACTION_REF}}"' in script
+
+    guard = next(line for line in script.splitlines() if "$PLATFORM_REPOSITORY" in line)
+    assert '[ -z "$REQUESTED" ]' in guard
