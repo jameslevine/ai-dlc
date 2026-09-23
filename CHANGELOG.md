@@ -36,6 +36,17 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   when `uv.lock` is present, so the unlocked branch could never be taken and
   no fixture could produce it.
 
+### Fixed
+
+- The canonical python + react + sam stack no longer exceeds the default
+  token budget: "Run these exactly as written" is said once above the
+  targets, the rule index renders one line per distinct glob list without
+  the `**/` prefix, and `core` 0.3.1 tightens the tickets rule. That stack
+  is ~1336 tokens against 1500, and a test pins it at or under 1350. (#15)
+- A `url` MCP server is emitted with `"type": "http"` in `.mcp.json`,
+  `.cursor/mcp.json` and `.vscode/mcp.json`; Claude Code skipped the entry
+  without it. Command servers are unchanged. (#16)
+
 ## [1.1.1] - 2026-09-23
 
 ### Fixed

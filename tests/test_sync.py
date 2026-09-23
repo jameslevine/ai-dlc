@@ -211,7 +211,13 @@ def test_init_writes_mcp_config_and_the_backend_agent_for_a_fastapi_service(
 
     servers = json.loads(read(repo, ".mcp.json"))["mcpServers"]
     assert set(servers) == {"aws-docs", "context7", "playwright", "github"}
-    assert servers["github"] == {"url": "https://api.githubcopilot.com/mcp/"}
+    # Claude Code skips a `url` server that carries no `type`, so the grant
+    # `mcp__github` in the generated agents would point at nothing.
+    assert servers["github"] == {"type": "http", "url": "https://api.githubcopilot.com/mcp/"}
+    assert "type" not in servers["context7"], "clients infer stdio from `command`"
+    for fan_out in (".cursor/mcp.json", ".vscode/mcp.json"):
+        root_key = "servers" if fan_out.startswith(".vscode") else "mcpServers"
+        assert json.loads(read(repo, fan_out))[root_key]["github"]["type"] == "http"
 
     backend = read(repo, ".claude/agents/backend.md")
     header = yaml.safe_load(backend.split("---\n")[1])

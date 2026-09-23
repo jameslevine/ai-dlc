@@ -1,9 +1,9 @@
-<!-- aidlc:begin id=core version=core@0.3.0+rules-security@0.1.0+rules-python@0.2.0 digest=sha256:9b8dafe8dcada8b1 -->
+<!-- aidlc:begin id=core version=core@0.3.1+rules-security@0.1.0+rules-python@0.2.0 digest=sha256:ee8f57e0f0d87846 -->
 ## This project
 
-**Python**, managed with uv.
-
 Run these exactly as written; they are what CI runs.
+
+**Python**, managed with uv.
 
 - install: `uv sync --locked`
 - lint: `uv run ruff check .`
@@ -41,16 +41,16 @@ the thing that was asked for, under stated assumptions.
 
 ### Work starts from a ticket and progress lives on it
 
-Every task maps to a GitHub issue before any code is written, and the issue
-number appears in the commit message: `refs #N` while in progress, `closes #N`
-when the acceptance criteria are met.
+Every task maps to a GitHub issue before any code is written, and the commit
+message carries its number: `refs #N` in progress, `closes #N` once the
+acceptance criteria are met.
 
-A bug or todo noticed mid-task is filed immediately with `gh issue create` and
-left for `pm` to prioritise. It is never kept in a note, a todo list or session
-memory; those vanish with the session, and the issue does not.
+A bug or todo noticed mid-task is filed at once with `gh issue create` for
+`pm` to prioritise, never parked in a note, a todo list or session memory;
+those vanish with the session and the issue does not.
 
-Decisions, human corrections and verification output are recorded as comments
-on the issue, so nothing about progress lives only in a session.
+Decisions, human corrections and verification output are comments on the
+issue, so nothing about progress lives only in a session.
 
 ### Claims about the code must be verified
 
@@ -67,12 +67,12 @@ that identifies it.
 
 ## Rules that apply to specific files
 
-- When editing `**/*.py`, `**/*.ts`, `**/*.tsx`: Validate at the boundary with a schema; reject, never coerce.
-- When editing `**/*.py`, `**/*.ts`, `**/*.tsx`, `**/*.y*ml`, `.env*`, `**/*.json`: Secrets never enter the repository.
-- When editing `**/pyproject.toml`, `**/package.json`, `**/uv.lock`, `**/package-lock.json`, `**/pnpm-lock.yaml`, `.github/workflows/*.y*ml`: Frozen installs, pinned actions, and a reason for every dependency.
-- When editing `pyproject.toml`, `uv.lock`, `**/*.py`: Dependencies go through uv, never pip.
-- When editing `tests/**/*.py`, `**/test_*.py`, `**/*_test.py`: Tests state what should be true, not what the code does.
-- When editing `**/*.py`: Annotate at the boundaries and keep the type checker clean.
+- `*.py`, `*.ts`, `*.tsx`: Validate at the boundary with a schema; reject, never coerce.
+- `*.py`, `*.ts`, `*.tsx`, `*.y*ml`, `.env*`, `*.json`: Secrets never enter the repository.
+- `pyproject.toml`, `package.json`, `uv.lock`, `package-lock.json`, `pnpm-lock.yaml`, `.github/workflows/*.y*ml`: Frozen installs, pinned actions, and a reason for every dependency.
+- `pyproject.toml`, `uv.lock`, `*.py`: Dependencies go through uv, never pip.
+- `tests/**/*.py`, `test_*.py`, `*_test.py`: Tests state what should be true, not what the code does.
+- `*.py`: Annotate at the boundaries and keep the type checker clean.
 
 ## Available skills
 

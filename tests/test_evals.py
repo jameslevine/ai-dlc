@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -179,3 +180,50 @@ def test_an_empty_repo_stays_under_the_default_budget(tmp_path: Path) -> None:
     init(repo)
 
     assert evaluate(repo) == 0
+
+
+def test_the_canonical_stack_stays_under_budget_with_headroom(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A FastAPI backend, a React frontend and a SAM template select eight
+    packs, and every byte of the block is the platform's own, so the default
+    budget has to hold with room to spare (#15). The repo is the two fixtures
+    composed, plus one source file and one test so every rule's globs match
+    something here, as they do on a real repository of this shape, and the
+    four-server `mcp:` block from QUICKSTART, so it is the stack the issue
+    describes."""
+    repo = tmp_path / "repo"
+    shutil.copytree(FIXTURES / "sam-fastapi", repo)
+    shutil.copytree(FIXTURES / "node-react", repo / "frontend")
+    (repo / "backend/app").mkdir()
+    (repo / "backend/app/main.py").write_text("app = None\n", encoding="utf-8")
+    (repo / "backend/tests").mkdir()
+    (repo / "backend/tests/test_main.py").write_text(
+        "def test_app() -> None: ...\n", encoding="utf-8"
+    )
+    (repo / ".aidlc").mkdir()
+    (repo / ".aidlc/config.yml").write_text(
+        "schema: 1\n"
+        "mcp:\n"
+        "  aws-docs:\n"
+        "    command: uvx\n"
+        '    args: ["awslabs.aws-documentation-mcp-server@latest"]\n'
+        "  context7:\n"
+        "    command: npx\n"
+        '    args: ["-y", "@upstash/context7-mcp"]\n'
+        "  playwright:\n"
+        "    command: npx\n"
+        '    args: ["-y", "@playwright/mcp@latest"]\n'
+        "  github:\n"
+        "    url: https://api.githubcopilot.com/mcp/\n",
+        encoding="utf-8",
+    )
+    init(repo)
+
+    assert evaluate(repo) == 0
+    out = capsys.readouterr().out
+    assert "packs                8" in out
+    assert "No findings." in out
+    match = re.search(r"~(\d+) tokens", out)
+    assert match is not None
+    assert int(match.group(1)) <= 1350

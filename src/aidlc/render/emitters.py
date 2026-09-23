@@ -75,6 +75,10 @@ def _project_summary(profile: Profile) -> list[str]:
         return []
 
     lines = ["## This project", ""]
+    # Said once, above every target, rather than once per target: the promise
+    # is the same for all of them and every repetition is paid on every turn.
+    if any(target.job.steps for target in profile.targets):
+        lines.extend(["Run these exactly as written; they are what CI runs.", ""])
     for target in profile.targets:
         lines.extend(_target_summary(target, single=len(profile.targets) == 1))
     return lines
@@ -86,16 +90,15 @@ def _target_summary(target: Target, *, single: bool) -> list[str]:
     manager = f", managed with {target.manager}" if target.manager else ""
 
     lines = [f"**{language}{where}**{manager}.", ""]
-    # Every step, in the order CI runs them. The sentence below promises that
-    # this list is what CI runs, so leaving a step out makes it false.
+    # Every step, in the order CI runs them. The sentence above the targets
+    # promises that this list is what CI runs, so leaving a step out makes it
+    # false.
     commands = [
         f"- {name.value}: `{step.command}`"
         for name in StepName
         if (step := target.job.step(name)) is not None
     ]
     if commands:
-        lines.append("Run these exactly as written; they are what CI runs.")
-        lines.append("")
         lines.extend(commands)
         lines.append("")
     return lines
@@ -126,10 +129,19 @@ def agents_md_content(packs: list[Pack], profile: Profile) -> str:
         # Indexed, not inlined. Inlining a rule that applies to one file type
         # spends its tokens on every turn, which is the cost the ETH result
         # warns about; tools that support glob scoping load it on demand.
+        #
+        # One line per distinct glob list, not per rule: the three rules-aws
+        # rules share a five-glob list, and repeating it three times is the
+        # single largest piece of boilerplate on a full-stack repository.
+        # Every glob still appears, so an agent matching a changed file
+        # against this index loses nothing; only the repetition goes.
         sections.extend(["## Rules that apply to specific files", ""])
+        by_globs: dict[tuple[str, ...], list[Rule]] = {}
         for rule in conditional:
-            globs = ", ".join(f"`{g}`" for g in rule.globs)
-            sections.append(f"- When editing {globs}: {rule.title}.")
+            by_globs.setdefault(tuple(rule.globs), []).append(rule)
+        for globs, rules in by_globs.items():
+            titles = ". ".join(rule.title for rule in rules)
+            sections.append(f"- {_glob_index(globs)}: {titles}.")
         sections.append("")
 
     if skills := [skill for pack in packs for skill in pack.skills]:
@@ -140,6 +152,19 @@ def agents_md_content(packs: list[Pack], profile: Profile) -> str:
         sections.append("")
 
     return "\n".join(sections).strip()
+
+
+def _glob_index(globs: tuple[str, ...]) -> str:
+    """Render a rule's globs for the AGENTS.md index, compactly.
+
+    The `**/` prefix means "at any depth", which is what a bare pattern
+    already reads as in an index (`*.py` is every Python file), so it is
+    dropped here. A glob that names a directory, such as `tests/**/*.py` or
+    `infra/**`, is left whole. The Cursor and Copilot outputs carry the real
+    globs untouched; this is the human-readable pointer, not the matcher.
+    """
+    shown = (glob.removeprefix("**/") for glob in globs)
+    return ", ".join(f"`{glob}`" for glob in shown)
 
 
 def agents_md(packs: list[Pack], profile: Profile, version: str) -> Artifact:
@@ -359,6 +384,11 @@ def mcp_artifacts(config: Config) -> list[Artifact]:
     for name, server in config.mcp.items():
         entry: dict[str, object] = {}
         if server.url:
+            # Claude Code refuses a `url` entry without a `type` and skips the
+            # server; VS Code's format carries the same field, and Cursor
+            # tolerates it. Command servers are left alone: every client
+            # infers stdio from `command`.
+            entry["type"] = "http"
             entry["url"] = server.url
         if server.command:
             entry["command"] = server.command

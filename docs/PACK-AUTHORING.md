@@ -74,8 +74,10 @@ always: false
 - `globs`: paths the rule applies to, in `fnmatch` form. `**/*.py` also
   matches a root-level file.
 - `always`: `true` inlines the whole body into AGENTS.md, where every turn in
-  every session pays for it. `false` costs one index line in AGENTS.md and a
-  full copy in Cursor and Copilot, which load it only for matching files.
+  every session pays for it. `false` costs one entry in the AGENTS.md index
+  (a line per distinct glob list, so rules with identical globs share one)
+  and a full copy in Cursor and Copilot, which load it only for matching
+  files.
 
 Default to `always: false`. The `core` pack is the only one that should carry
 always-on rules, and its four are the whole working agreement.

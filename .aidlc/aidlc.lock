@@ -24,12 +24,12 @@
     {
       "kind": "file",
       "path": ".claude/agents/pm.md",
-      "sha256": "a2af6e2691b8ae0fa51f165a99c35bf9c9cf740105b0050cd68e4de865c214c0"
+      "sha256": "144f10bfbc138faaef895bb2d2b6707982809f866174d4db17be55f6c3261138"
     },
     {
       "kind": "file",
       "path": ".claude/agents/reviewer.md",
-      "sha256": "99cb67be61d78373643e34e1506b345334d91518ef7589afa50a16a08710a9e8"
+      "sha256": "4952b8b10d72d0b6320b831c4bab0ee3ae149599f6f762519d187d28c68cb48f"
     },
     {
       "kind": "file",
@@ -100,15 +100,15 @@
       "identifier": "core",
       "kind": "block",
       "path": "AGENTS.md",
-      "sha256": "sha256:9b8dafe8dcada8b1"
+      "sha256": "sha256:ee8f57e0f0d87846"
     }
   ],
   "packs": [
     {
-      "digest": "sha256:d2bc23da365a2056dcd61dabd5903f1b",
+      "digest": "sha256:863e3abcc371f44c783e31fd62397cef",
       "name": "core",
       "source": "builtin",
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     {
       "digest": "sha256:9ec05ffe1d6f41e8bf1081fa149574b1",
