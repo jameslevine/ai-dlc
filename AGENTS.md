@@ -1,4 +1,4 @@
-<!-- aidlc:begin id=core version=core@0.3.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:9b8dafe8dcada8b1 -->
+<!-- aidlc:begin id=core version=core@0.3.0+rules-security@0.1.0+rules-python@0.2.0 digest=sha256:9b8dafe8dcada8b1 -->
 ## This project
 
 **Python**, managed with uv.

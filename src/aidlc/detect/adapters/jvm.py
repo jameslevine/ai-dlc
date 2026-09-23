@@ -25,6 +25,18 @@ _MAVEN_RELEASE = re.compile(
 _GRADLE_TOOLCHAIN = re.compile(r"JavaLanguageVersion\.of\(\s*(\d+)\s*\)")
 _VERSION_FILE = re.compile(r"(\d+)")
 
+#: Each build tool's runner with its wrapper script and without one.
+_RUNNERS: dict[str, tuple[str, str]] = {
+    "maven": ("./mvnw", "mvn"),
+    "gradle": ("./gradlew", "gradle"),
+}
+#: The one command that compiles and tests. `-B` for non-interactive, `-ntp`
+#: to silence transfer noise that otherwise dominates a CI log.
+_VERIFY: dict[str, str] = {
+    "maven": "{runner} -B -ntp verify",
+    "gradle": "{runner} --no-daemon build",
+}
+
 
 class JvmAdapter:
     id = "jvm"
@@ -120,16 +132,15 @@ class JvmAdapter:
         return []
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        if facts.manager == "maven":
-            runner = "./mvnw" if facts.facts.get("wrapper") else "mvn"
-            # `-B` for non-interactive, `-ntp` to silence transfer noise that
-            # otherwise dominates a CI log.
-            defaults = {
-                StepName.TEST: f"{runner} -B -ntp verify",
-            }
-        else:
-            runner = "./gradlew" if facts.facts.get("wrapper") else "gradle"
-            defaults = {
-                StepName.TEST: f"{runner} --no-daemon build",
-            }
+        tool = "maven" if facts.manager == "maven" else "gradle"
+        wrapper, bare = _RUNNERS[tool]
+        runner = wrapper if facts.facts.get("wrapper") else bare
+        defaults = {StepName.TEST: _VERIFY[tool].format(runner=runner)}
         return make_job(facts, SetupKind.JAVA, defaults)
+
+    def default_commands(self) -> frozenset[str]:
+        return frozenset(
+            _VERIFY[tool].format(runner=runner)
+            for tool, runners in _RUNNERS.items()
+            for runner in runners
+        )

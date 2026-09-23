@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "catalogue"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pyright]
+include = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

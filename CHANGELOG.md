@@ -11,6 +11,31 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+### Added
+
+- Every default command an adapter can emit is produced by at least one
+  fixture, and `tests/test_detect.py` enforces it: each adapter exposes
+  `default_commands()`, built from the same tables its `job_spec` reads, and
+  the test checks every one against the union of every fixture's default
+  steps. The fixtures that closes the gaps it found: `python-managers` (uv
+  with mypy, poetry with ruff, pip from requirements, pip editable),
+  `node-managers` (bun and yarn lockfiles, and pnpm, yarn and bun declared
+  without one), `jvm-no-wrapper`, `go-golangci` and `cloudformation-yml`.
+  `docs/PACK-AUTHORING.md` states the rule. (#8)
+- Documentation never contains a machine-specific absolute path.
+  `tests/test_docs.py` runs the check over every tracked Markdown file and
+  everything under `packs/`; `docs/PACK-AUTHORING.md` states the rule. (#9)
+- `rules-python` 0.2.0: the tests rule now says a test reaches behaviour
+  through the public entry point, because importing a private table to
+  assert on its contents pins the implementation rather than the
+  requirement. (#7)
+
+### Removed
+
+- The Python adapter's unreachable `uv sync` install. A project is `uv` only
+  when `uv.lock` is present, so the unlocked branch could never be taken and
+  no fixture could produce it.
+
 ## [1.1.1] - 2026-09-23
 
 ### Fixed

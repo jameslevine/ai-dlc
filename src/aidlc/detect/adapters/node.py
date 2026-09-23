@@ -29,6 +29,11 @@ _MANAGERS: tuple[tuple[str, str, str], ...] = (
     ("package-lock.json", "npm", "npm ci"),
 )
 
+#: The install when no lockfile is beside the manifest, so a frozen install
+#: has nothing to freeze against. `packageManager` names the manager; npm is
+#: the fallback when nothing does.
+_BARE_INSTALL = "{manager} install"
+
 #: Dependency name to framework label. Order matters: the first match wins for
 #: meta-frameworks that also depend on the thing they wrap.
 _FRAMEWORK_HINTS: tuple[tuple[str, str], ...] = (
@@ -67,6 +72,14 @@ _AUDIT_COMMANDS: dict[str, str] = {
     "pnpm": "pnpm audit --audit-level=high",
     "yarn": "yarn npm audit --severity high",
 }
+
+#: The one default worth holding: a TypeScript project with a tsconfig but no
+#: typecheck script still benefits from a compile check, and `tsc --noEmit`
+#: is unambiguous in a way that "lint" is not. It runs through the manager's
+#: package runner; every manager but bun uses npx.
+_TYPECHECK = "{runner} tsc --noEmit"
+_PACKAGE_RUNNER = "npx"
+_PACKAGE_RUNNERS: dict[str, str] = {"bun": "bunx"}
 
 _SEMVER_MAJOR = re.compile(r"(\d+)")
 
@@ -145,8 +158,8 @@ class NodeAdapter:
         declared = manifest.get("packageManager")
         if isinstance(declared, str) and "@" in declared:
             name = declared.split("@", 1)[0]
-            return name, f"{name} install", None
-        return "npm", "npm install", None
+            return name, _BARE_INSTALL.format(manager=name), None
+        return "npm", _BARE_INSTALL.format(manager="npm"), None
 
     @staticmethod
     def _dependencies(manifest: dict[str, Any]) -> set[str]:
@@ -181,17 +194,30 @@ class NodeAdapter:
         return []
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        install = str(facts.facts.get("install_command") or "npm install")
+        install = str(facts.facts.get("install_command") or _BARE_INSTALL.format(manager="npm"))
         defaults: dict[StepName, str] = {StepName.INSTALL: install}
 
-        # The one default worth holding: a TypeScript project with a tsconfig
-        # but no typecheck script still benefits from a compile check, and
-        # `tsc --noEmit` is unambiguous in a way that "lint" is not.
         if facts.facts.get("typescript"):
-            runner = "bunx" if facts.manager == "bun" else "npx"
-            defaults[StepName.TYPECHECK] = f"{runner} tsc --noEmit"
+            runner = _PACKAGE_RUNNERS.get(facts.manager or "", _PACKAGE_RUNNER)
+            defaults[StepName.TYPECHECK] = _TYPECHECK.format(runner=runner)
 
         if audit := _AUDIT_COMMANDS.get(facts.manager or ""):
             defaults[StepName.AUDIT] = audit
 
         return make_job(facts, SetupKind.NODE, defaults)
+
+    def default_commands(self) -> frozenset[str]:
+        """Every default the tables above can produce.
+
+        A `packageManager` naming a manager outside `_MANAGERS` also yields
+        `<name> install`; that string is the project's own declaration passed
+        through, not a table entry, so it is not enumerated here.
+        """
+        managers = {"npm", *(name for _, name, _ in _MANAGERS)}
+        runners = {_PACKAGE_RUNNER, *_PACKAGE_RUNNERS.values()}
+        return frozenset(
+            {install for _, _, install in _MANAGERS}
+            | {_BARE_INSTALL.format(manager=name) for name in managers}
+            | {_TYPECHECK.format(runner=runner) for runner in runners}
+            | set(_AUDIT_COMMANDS.values())
+        )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from aidlc.detect.adapters.base import TargetFacts, make_job, steps_from_makefile
@@ -36,6 +37,53 @@ _REQUIRES_PYTHON = re.compile(r">=\s*(\d+)\.(\d+)")
 
 #: Versions we are willing to put in a CI matrix, newest last.
 _KNOWN_VERSIONS = ("3.12", "3.13", "3.14")
+
+
+@dataclass(frozen=True, slots=True)
+class _Toolchain:
+    """How CI sets up, installs and runs a project under one package manager."""
+
+    setup: SetupKind
+    install: str
+    """Empty when the install depends on what the project has; see `_PIP_INSTALLS`."""
+    run: str
+    """Prefix that runs a tool inside the project environment."""
+    audit: str
+    """Empty when the manager cannot run pip-audit without the project installing it."""
+
+
+#: `uv run --with` runs pip-audit from an ephemeral environment, so the
+#: project's own lockfile never has to list it. The other managers have no
+#: equivalent: `poetry run pip-audit` fails unless the project installs
+#: pip-audit itself, so they get no audit step. Poetry has no first-party
+#: setup action, so the generic workflow installs nothing and its commands
+#: carry their own runner. pipenv and pdm lockfiles are recognised but their
+#: projects are installed with pip.
+_TOOLCHAINS: dict[str, _Toolchain] = {
+    "uv": _Toolchain(
+        SetupKind.UV, "uv sync --locked", "uv run ", "uv run --with pip-audit pip-audit"
+    ),
+    "poetry": _Toolchain(SetupKind.NONE, "poetry install --no-interaction", "poetry run ", ""),
+    "pip": _Toolchain(SetupKind.NONE, "", "", ""),
+}
+
+#: pip installs from whatever the project actually has, first match wins.
+#: Emitting `-r requirements.txt` for a project that has none produces CI
+#: that fails on its first step, which is worse than no CI at all; a project
+#: with neither gets no install step.
+_PIP_INSTALLS: dict[str, str] = {
+    "requirements": "python -m pip install -r requirements.txt",
+    "installable": "python -m pip install -e .",
+}
+
+#: Tools run through the toolchain's `run` prefix, each only when the project
+#: configures it. The type checker is whichever of `_TYPE_CHECKERS` it uses.
+_TOOLS: dict[StepName, str] = {
+    StepName.LINT: "ruff check .",
+    StepName.FORMAT: "ruff format --check .",
+    StepName.TEST: "pytest",
+}
+_TYPE_CHECKERS = ("pyright", "mypy")
 
 
 class PythonAdapter:
@@ -142,10 +190,10 @@ class PythonAdapter:
         enough: a project that installs pyright into its dev group intends to
         run it, whether or not it has written a config table yet.
         """
-        for checker in ("pyright", "mypy"):
+        for checker in _TYPE_CHECKERS:
             if checker in tool:
                 return checker
-        for checker in ("pyright", "mypy"):
+        for checker in _TYPE_CHECKERS:
             if any(dep.startswith(checker) for dep in dependencies):
                 return checker
         return None
@@ -155,46 +203,30 @@ class PythonAdapter:
         return "pytest" in tool or any(dep.startswith("pytest") for dep in dependencies)
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        manager = facts.manager
-        locked = facts.facts.get("lockfile")
-
-        if manager == "uv":
-            install = "uv sync --locked" if locked else "uv sync"
-            run = "uv run "
-            setup = SetupKind.UV
-            # `--with` runs pip-audit from an ephemeral environment, so the
-            # project's own lockfile never has to list it. The other managers
-            # have no equivalent: `poetry run pip-audit` fails unless the
-            # project installs pip-audit itself, so they get no default.
-            audit = "uv run --with pip-audit pip-audit"
-        elif manager == "poetry":
-            install = "poetry install --no-interaction"
-            run = "poetry run "
-            setup = SetupKind.NONE
-            audit = ""
-        else:
-            # Install from whatever this project actually has. Emitting
-            # `-r requirements.txt` for a project that has none produces CI
-            # that fails on its first step, which is worse than no CI at all.
-            if facts.facts.get("requirements"):
-                install = "python -m pip install -r requirements.txt"
-            elif facts.facts.get("installable"):
-                install = "python -m pip install -e ."
-            else:
-                install = ""
-            run = ""
-            setup = SetupKind.NONE
-            audit = ""
+        toolchain = _TOOLCHAINS.get(facts.manager or "", _TOOLCHAINS["pip"])
+        install = toolchain.install or next(
+            (command for fact, command in _PIP_INSTALLS.items() if facts.facts.get(fact)), ""
+        )
 
         defaults: dict[StepName, str] = {StepName.INSTALL: install}
         if facts.facts.get("linter") == "ruff":
-            defaults[StepName.LINT] = f"{run}ruff check ."
-            defaults[StepName.FORMAT] = f"{run}ruff format --check ."
+            defaults[StepName.LINT] = toolchain.run + _TOOLS[StepName.LINT]
+            defaults[StepName.FORMAT] = toolchain.run + _TOOLS[StepName.FORMAT]
         if checker := facts.facts.get("type_checker"):
-            defaults[StepName.TYPECHECK] = f"{run}{checker}"
+            defaults[StepName.TYPECHECK] = f"{toolchain.run}{checker}"
         if facts.facts.get("test_framework") == "pytest":
-            defaults[StepName.TEST] = f"{run}pytest"
-        if audit:
-            defaults[StepName.AUDIT] = audit
+            defaults[StepName.TEST] = toolchain.run + _TOOLS[StepName.TEST]
+        if toolchain.audit:
+            defaults[StepName.AUDIT] = toolchain.audit
 
-        return make_job(facts, setup, defaults)
+        return make_job(facts, toolchain.setup, defaults)
+
+    def default_commands(self) -> frozenset[str]:
+        toolchains = _TOOLCHAINS.values()
+        tools = (*_TOOLS.values(), *_TYPE_CHECKERS)
+        return frozenset(
+            {toolchain.install for toolchain in toolchains if toolchain.install}
+            | set(_PIP_INSTALLS.values())
+            | {toolchain.run + tool for toolchain in toolchains for tool in tools}
+            | {toolchain.audit for toolchain in toolchains if toolchain.audit}
+        )

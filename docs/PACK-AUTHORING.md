@@ -43,6 +43,22 @@ row there as well as the declaration; the declaration is what a reader of the
 pack sees, and the table is what a test pins. An explicit `packs:` list in a
 consumer's `.aidlc/config.yml` replaces selection entirely.
 
+## Adapter defaults
+
+Detection is the other half of a pack. The adapters in
+`src/aidlc/detect/adapters/` decide which directories are targets and what CI
+runs for each one when the project declares nothing itself. Every default
+command an adapter can emit is produced by at least one fixture under
+`tests/fixtures/`. A default no fixture produces has never been rendered by a
+test or executed on a runner, so it ships untested; `sam validate --lint`
+shipped that way and was only given a fixture after review.
+
+Each adapter's `default_commands()` enumerates its defaults from the same
+tables its `job_spec` reads, and `tests/test_detect.py` checks every one
+against the union of every fixture's default steps. So a new default is two
+changes in the same commit: the table entry, and a fixture whose manifests
+make the adapter choose it.
+
 ## Rule frontmatter
 
 ```markdown
@@ -92,6 +108,14 @@ outcomes. So every rule must earn its tokens:
 - No filler, no motivation paragraphs, no restating the title.
 
 `packs/rules-python/rules/typing.md` is the reference for tone and length.
+
+The same voice applies to the documentation in this repository, with one rule
+of its own: documentation never contains a machine-specific absolute path. A
+path that starts at a home directory is correct on the author's machine and
+nowhere else, and invisible to the author for the same reason.
+Write `<path-to-this-repo>` or a path relative to the repository root;
+`tests/test_docs.py` fails on the real thing, in every tracked Markdown file
+and everything under `packs/`.
 
 ## Bumping a version
 

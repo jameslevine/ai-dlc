@@ -12,6 +12,11 @@ Assert on outcomes, not on the steps taken to reach them. A test that asserts
 which internal methods were called fails whenever the implementation is
 refactored, which trains people to update tests without reading them.
 
+Reach behaviour through the public entry point: the function, command or
+registry a caller would use. Importing a private table or helper to assert on
+its contents pins the implementation rather than the requirement, so a correct
+refactor fails the test and the test is what gets changed.
+
 Use plain `assert`. Use `pytest.raises` with `match=` so that a differently
 caused exception of the same type does not pass silently.
 

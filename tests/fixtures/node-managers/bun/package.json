@@ -1,0 +1,6 @@
+{
+  "name": "bun-app",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

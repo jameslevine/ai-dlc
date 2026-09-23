@@ -57,6 +57,16 @@ class EcosystemAdapter(Protocol):
         """Turn detected facts into the CI job that builds them."""
         ...
 
+    def default_commands(self) -> frozenset[str]:
+        """Every command ``job_spec`` can emit with :attr:`StepSource.DEFAULT`.
+
+        Built from the same tables ``job_spec`` reads, never from a second
+        list, so a test can show that each default is produced by at least
+        one fixture. A default no fixture produces has never been rendered
+        by a test or run by CI.
+        """
+        ...
+
 
 def resolve_steps(
     facts: TargetFacts,

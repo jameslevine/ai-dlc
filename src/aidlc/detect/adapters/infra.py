@@ -22,6 +22,15 @@ _SAM_CONFIG = "samconfig.toml"
 _SERVERLESS = "AWS::Serverless"
 _FORMAT_VERSION = "AWSTemplateFormatVersion"
 
+_TERRAFORM_FMT = "terraform fmt -check -recursive"
+#: pipx is on the ubuntu-latest image, so cfn-lint needs no setup step and
+#: nothing is added to the project's own dependencies.
+_CFN_LINT = "pipx run cfn-lint {template}"
+#: samconfig.toml without a conventionally named template: the SAM CLI reads
+#: the template path from that file, and `--lint` runs cfn-lint locally
+#: without touching AWS.
+_SAM_VALIDATE = "sam validate --lint"
+
 
 class InfraAdapter:
     id = "infra"
@@ -124,16 +133,19 @@ class InfraAdapter:
         return None, False
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        defaults: dict[StepName, str] = {}
         if facts.facts.get("kind") == "terraform":
-            defaults[StepName.LINT] = "terraform fmt -check -recursive"
+            lint = _TERRAFORM_FMT
         elif template := facts.facts.get("template"):
-            # pipx is on the ubuntu-latest image, so cfn-lint needs no setup
-            # step and nothing is added to the project's own dependencies.
-            defaults[StepName.LINT] = f"pipx run cfn-lint {template}"
+            lint = _CFN_LINT.format(template=template)
         else:
-            # samconfig.toml without a conventionally named template: the SAM
-            # CLI reads the template path from that file, and `--lint` runs
-            # cfn-lint locally without touching AWS.
-            defaults[StepName.LINT] = "sam validate --lint"
-        return make_job(facts, SetupKind.NONE, defaults)
+            lint = _SAM_VALIDATE
+        return make_job(facts, SetupKind.NONE, {StepName.LINT: lint})
+
+    def default_commands(self) -> frozenset[str]:
+        return frozenset(
+            (
+                _TERRAFORM_FMT,
+                _SAM_VALIDATE,
+                *(_CFN_LINT.format(template=name) for name in _TEMPLATES),
+            )
+        )

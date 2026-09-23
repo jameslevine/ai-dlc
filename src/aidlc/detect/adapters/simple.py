@@ -17,6 +17,28 @@ from aidlc.schemas.profile import JobSpec, SetupKind, StepName
 _GO_DIRECTIVE = re.compile(r"^go\s+(\d+\.\d+)", re.MULTILINE)
 _RUST_CHANNEL = re.compile(r'channel\s*=\s*"([^"]+)"')
 
+_GO_DEFAULTS: dict[StepName, str] = {
+    StepName.INSTALL: "go mod download",
+    StepName.LINT: "go vet ./...",
+    StepName.FORMAT: 'test -z "$(gofmt -l .)"',
+    StepName.TEST: "go test ./...",
+}
+#: Replaces `go vet` only when the repo configures golangci-lint; see `detect`.
+_GOLANGCI_LINT = "golangci-lint run"
+
+_RUST_DEFAULTS: dict[StepName, str] = {
+    StepName.FORMAT: "cargo fmt --check",
+    StepName.LINT: "cargo clippy -- -D warnings",
+    StepName.TEST: "cargo test",
+}
+
+_DOTNET_DEFAULTS: dict[StepName, str] = {
+    StepName.INSTALL: "dotnet restore",
+    StepName.FORMAT: "dotnet format --verify-no-changes",
+    StepName.BUILD: "dotnet build --no-restore --configuration Release",
+    StepName.TEST: "dotnet test --no-build --configuration Release",
+}
+
 
 class GoAdapter:
     id = "go"
@@ -46,15 +68,13 @@ class GoAdapter:
         return results
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        defaults = {
-            StepName.INSTALL: "go mod download",
-            StepName.LINT: "go vet ./...",
-            StepName.FORMAT: 'test -z "$(gofmt -l .)"',
-            StepName.TEST: "go test ./...",
-        }
+        defaults = dict(_GO_DEFAULTS)
         if facts.facts.get("golangci"):
-            defaults[StepName.LINT] = "golangci-lint run"
+            defaults[StepName.LINT] = _GOLANGCI_LINT
         return make_job(facts, SetupKind.GO, defaults)
+
+    def default_commands(self) -> frozenset[str]:
+        return frozenset((*_GO_DEFAULTS.values(), _GOLANGCI_LINT))
 
 
 class RustAdapter:
@@ -89,12 +109,10 @@ class RustAdapter:
         return results
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        defaults = {
-            StepName.FORMAT: "cargo fmt --check",
-            StepName.LINT: "cargo clippy -- -D warnings",
-            StepName.TEST: "cargo test",
-        }
-        return make_job(facts, SetupKind.RUST, defaults)
+        return make_job(facts, SetupKind.RUST, _RUST_DEFAULTS)
+
+    def default_commands(self) -> frozenset[str]:
+        return frozenset(_RUST_DEFAULTS.values())
 
 
 class DotnetAdapter:
@@ -137,10 +155,7 @@ class DotnetAdapter:
         return path.rsplit("/", 1)[0] if "/" in path else "."
 
     def job_spec(self, facts: TargetFacts) -> JobSpec:
-        defaults = {
-            StepName.INSTALL: "dotnet restore",
-            StepName.FORMAT: "dotnet format --verify-no-changes",
-            StepName.BUILD: "dotnet build --no-restore --configuration Release",
-            StepName.TEST: "dotnet test --no-build --configuration Release",
-        }
-        return make_job(facts, SetupKind.DOTNET, defaults)
+        return make_job(facts, SetupKind.DOTNET, _DOTNET_DEFAULTS)
+
+    def default_commands(self) -> frozenset[str]:
+        return frozenset(_DOTNET_DEFAULTS.values())

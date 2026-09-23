@@ -39,7 +39,7 @@
     {
       "kind": "file",
       "path": ".cursor/rules/rules-python-tests.mdc",
-      "sha256": "58587362fcf05301a9f70c5082b526ed25c4f527f2a75ab7bca8b5d235198271"
+      "sha256": "8658d7d642151ad7443451a5bda457539dbf652b1efec57393425ba16b0969dd"
     },
     {
       "kind": "file",
@@ -69,7 +69,7 @@
     {
       "kind": "file",
       "path": ".github/instructions/rules-python-tests.instructions.md",
-      "sha256": "076b99115f6d5ed825f80d8b11724b0ce1fa8364cbcdb07253ade86d7cd25a0a"
+      "sha256": "b400e51aec0a07564777b39e8a70870266e485a722f1a7f9823ca0959a61e271"
     },
     {
       "kind": "file",
@@ -111,10 +111,10 @@
       "version": "0.3.0"
     },
     {
-      "digest": "sha256:937569348ed4a6b9eb8a019686642116",
+      "digest": "sha256:9ec05ffe1d6f41e8bf1081fa149574b1",
       "name": "rules-python",
       "source": "builtin",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "digest": "sha256:d52dc81bd40601c85f9a784b2cf6f9dc",

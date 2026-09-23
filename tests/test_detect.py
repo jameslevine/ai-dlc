@@ -11,10 +11,17 @@ from pathlib import Path
 import pytest
 
 from aidlc.detect import detect, scan
+from aidlc.detect.adapters import ADAPTERS
 from aidlc.schemas.config import Config
 from aidlc.schemas.profile import Profile, SetupKind, StepName, StepSource
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+#: Every fixture repository detection is run over unaided. `escape-hatch` is
+#: left out: no adapter knows Zig, so it produces a target only with a config.
+DETECTABLE_FIXTURES = sorted(
+    path.name for path in FIXTURES.iterdir() if path.is_dir() and path.name != "escape-hatch"
+)
 
 
 def profile_for(name: str, config: Config | None = None) -> Profile:
@@ -644,25 +651,7 @@ def test_detect_on_an_empty_directory_is_not_an_error(tmp_path: Path) -> None:
     assert profile.packs_selected == ["core", "rules-security"]
 
 
-@pytest.mark.parametrize(
-    "fixture",
-    [
-        "python-uv",
-        "python-poetry",
-        "node-react",
-        "node-plain",
-        "jvm-maven",
-        "jvm-gradle",
-        "go-mod",
-        "rust-cargo",
-        "dotnet-sln",
-        "polyglot",
-        "sam-fastapi",
-        "sam-root",
-        "sam-config-only",
-        "terraform",
-    ],
-)
+@pytest.mark.parametrize("fixture", DETECTABLE_FIXTURES)
 def test_every_fixture_produces_a_runnable_target(fixture: str) -> None:
     """Whatever else it decides, detection must never emit a target with no
     way to verify the code. A job with no steps is a green check that means
@@ -671,3 +660,21 @@ def test_every_fixture_produces_a_runnable_target(fixture: str) -> None:
     assert profile.targets, f"{fixture} produced no targets"
     for target in profile.targets:
         assert target.job.steps, f"{fixture}:{target.path} produced a job with no steps"
+
+
+def test_adapter_default_commands_are_each_produced_by_a_fixture() -> None:
+    """Every default command an adapter can emit is produced by at least one
+    fixture. A default no fixture produces has never been rendered by a test
+    or executed on a runner; `sam validate --lint` shipped that way. The step
+    must come from the adapter, not from a Makefile or script that happens to
+    spell the same command."""
+    produced = {
+        step.command
+        for fixture in DETECTABLE_FIXTURES
+        for target in profile_for(fixture).targets
+        for step in target.job.steps
+        if step.source is StepSource.DEFAULT
+    }
+    for adapter in ADAPTERS:
+        missing = adapter.default_commands() - produced
+        assert not missing, f"{adapter.id}: no fixture produces {sorted(missing)}"
