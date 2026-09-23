@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: jameslevine/ai-dlc/.github/actions/setup-aidlc@main # aidlc:pin
+      - uses: jameslevine/ai-dlc/.github/actions/setup-aidlc@d70fe505cd89faf2d63ae15918679ea8d06c2c25 # aidlc:pin
 
       # The profile is committed, so it can be stale. Re-detect and compare
       # before trusting it. Without this step the committed profile is an
@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    uses: jameslevine/ai-dlc/.github/workflows/reusable-lang-ci.yml@main # aidlc:pin
+    uses: jameslevine/ai-dlc/.github/workflows/reusable-lang-ci.yml@d70fe505cd89faf2d63ae15918679ea8d06c2c25 # aidlc:pin
     with:
       name: ${{ matrix.name }}
       setup: ${{ matrix.setup }}
@@ -77,4 +77,4 @@ jobs:
 
   secret-scan:
     if: inputs.secret-scan
-    uses: jameslevine/ai-dlc/.github/workflows/reusable-secret-scan.yml@main # aidlc:pin
+    uses: jameslevine/ai-dlc/.github/workflows/reusable-secret-scan.yml@d70fe505cd89faf2d63ae15918679ea8d06c2c25 # aidlc:pin
