@@ -11,6 +11,8 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-23
+
 ### Added
 
 - Project skeleton: `src/` layout, hatchling build, ruff, pyright and pytest

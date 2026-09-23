@@ -1,5 +1,5 @@
 {
-  "aidlc": "0.1.0",
+  "aidlc": "1.0.0",
   "outputs": [
     {
       "kind": "file",
