@@ -1,6 +1,6 @@
 [project]
 name = "aidlc"
-version = "1.1.0"
+version = "1.1.1"
 description = "A versioned, tool-agnostic AI development lifecycle: one source of truth for agent instructions, CI/CD and quality measurement."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -26,7 +26,7 @@
       "path": ".github/workflows/self-ci.yml"
     }
   ],
-  "generated_by": "aidlc 1.1.0",
+  "generated_by": "aidlc 1.1.1",
   "packs_selected": [
     "core",
     "rules-security",
