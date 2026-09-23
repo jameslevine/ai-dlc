@@ -73,9 +73,18 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   skill.
 - Whole-file outputs now refuse a hand edit on `sync`, as managed blocks
   already did, by comparing the file against the hash the lockfile recorded.
+- `backend`, `frontend` and `infra` agents, shipped by `rules-fastapi`,
+  `rules-react` and `rules-aws` respectively, so the `orchestrate` skill has a
+  named agent for each target it dispatches to. Each is granted the MCP servers
+  it needs (`context7`, `aws-docs`, `playwright`, `github`) and works without
+  any that are not configured. Express and Fastify projects now select the
+  observability pack, as FastAPI already did.
 
 ### Fixed
 
 - Updating a managed block no longer strips the newline after its closing
   marker, which had `sync` and the end-of-file pre-commit hook taking turns
   changing AGENTS.md.
+- AGENTS.md now lists every CI step for each target, in the order CI runs
+  them. `format` and `audit` were left out by a hard-coded list, which made
+  "they are what CI runs" false.

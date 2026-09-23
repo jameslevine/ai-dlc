@@ -191,6 +191,21 @@ def test_shipped_pack_agents_are_usable(name: str) -> None:
         assert agent.body.strip()
 
 
+#: The MCP servers docs/QUICKSTART.md tells a consumer to declare. An agent
+#: may grant only these, because `mcp__<name>` binds to a key in the consumer's
+#: `mcp:` block and a name that matches no key grants nothing, silently.
+DOCUMENTED_MCP_SERVERS = frozenset({"aws-docs", "context7", "playwright", "github"})
+
+
+@pytest.mark.parametrize("name", available_builtin())
+def test_shipped_agents_grant_only_documented_mcp_servers(name: str) -> None:
+    pack = load_builtin(name)
+    for agent in pack.agents:
+        granted = {tool[len("mcp__") :] for tool in agent.tools if tool.startswith("mcp__")}
+        unknown = granted - DOCUMENTED_MCP_SERVERS
+        assert not unknown, f"{name}:{agent.name} grants undocumented MCP servers {unknown}"
+
+
 def test_loading_from_a_path_works(tmp_path: Path) -> None:
     """Path sources are how a candidate pack version is evaluated."""
     from aidlc.packs.loader import load_from_path

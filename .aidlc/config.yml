@@ -3,7 +3,7 @@
 # strictness: standard | strict   (strict fails CI on profile drift)
 # packs:      explicit pack list; omit to let detection choose
 # pins:       exact pack versions, e.g. {rules-python: "1.2.0"}
-# emit:       {skills: true, cursor: true, copilot: true, mcp: true}
+# emit:       {skills: true, cursor: true, copilot: true, mcp: true, agents: true}
 # detect:     {ignore: ["vendor"]}
 # targets:    per-directory overrides, and the escape hatch for any language
 # mcp:        MCP servers, fanned out to every client's own config format

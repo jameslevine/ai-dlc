@@ -1,5 +1,5 @@
 name: rules-react
-version: 0.1.0
+version: 0.2.0
 kind: rules
 summary: "React conventions: component boundaries, state and effects."
 
@@ -13,3 +13,4 @@ emits:
   - agents_md
   - cursor_rules
   - copilot_instructions
+  - claude_agents

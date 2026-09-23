@@ -32,7 +32,7 @@ import yaml
 from aidlc.packs.loader import Pack
 from aidlc.schemas.config import Config
 from aidlc.schemas.pack import Agent, Emit, Rule, Skill
-from aidlc.schemas.profile import Profile, Target
+from aidlc.schemas.profile import Profile, StepName, Target
 
 
 class ArtifactKind(StrEnum):
@@ -86,10 +86,12 @@ def _target_summary(target: Target, *, single: bool) -> list[str]:
     manager = f", managed with {target.manager}" if target.manager else ""
 
     lines = [f"**{language}{where}**{manager}.", ""]
+    # Every step, in the order CI runs them. The sentence below promises that
+    # this list is what CI runs, so leaving a step out makes it false.
     commands = [
-        f"- {step.name.value}: `{step.command}`"
-        for step in target.job.steps
-        if step.name.value in {"install", "lint", "typecheck", "test", "build"}
+        f"- {name.value}: `{step.command}`"
+        for name in StepName
+        if (step := target.job.step(name)) is not None
     ]
     if commands:
         lines.append("Run these exactly as written; they are what CI runs.")

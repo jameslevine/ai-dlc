@@ -1,4 +1,4 @@
-<!-- aidlc:begin id=core version=core@0.2.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:ec2586333c886acb -->
+<!-- aidlc:begin id=core version=core@0.2.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:5d7794bcd426377e -->
 ## This project
 
 **Python**, managed with uv.
@@ -7,8 +7,10 @@ Run these exactly as written; they are what CI runs.
 
 - install: `uv sync --locked`
 - lint: `uv run ruff check .`
+- format: `uv run ruff format --check .`
 - typecheck: `uv run pyright`
 - test: `uv run pytest`
+- audit: `uv run --with pip-audit pip-audit`
 
 ## Working agreement
 

@@ -82,6 +82,55 @@ committed; they are what `aidlc check` compares against.
 | `aidlc check` | Report drift. Writes nothing. Exits 1 if anything is stale |
 | `aidlc eval` | Report what your rules cost, and which cannot be earning it |
 
+## Give the agents their tools
+
+Declare MCP servers once, in `.aidlc/config.yml`, and `aidlc sync` fans the
+block out to `.mcp.json` (Claude Code), `.cursor/mcp.json` and
+`.vscode/mcp.json`, each in that client's own format. These four start
+cleanly and are the ones the shipped agents ask for:
+
+```yaml
+# .aidlc/config.yml
+schema: 1
+mcp:
+  aws-docs:
+    command: uvx
+    args: ["awslabs.aws-documentation-mcp-server@latest"]
+  context7:
+    command: npx
+    args: ["-y", "@upstash/context7-mcp"]
+  playwright:
+    command: npx
+    args: ["-y", "@playwright/mcp@latest"]
+  github:
+    url: https://api.githubcopilot.com/mcp/
+```
+
+The keys are the contract. Each generated `.claude/agents/*.md` grants a
+server as `mcp__<name>` in its `tools` line, so `aws-docs` here is what makes
+`mcp__aws-docs` in the `backend` agent mean anything; rename a key and the
+grant silently points at nothing. `github` is a remote server that needs a
+token supplied by the client: Claude Code prompts for OAuth on first use. A
+server you leave out is simply unavailable to the agents that name it. Nothing
+fails; each agent says in its report that it worked without that server.
+
+## Agents
+
+Four Claude Code subagents ship, each brought by the pack that owns its part
+of the repository:
+
+| agent | pack | selected when |
+|---|---|---|
+| `reviewer` | `core` | always |
+| `backend` | `rules-fastapi` | a target depends on FastAPI |
+| `frontend` | `rules-react` | a target depends on React or Next |
+| `infra` | `rules-aws` | a SAM, CloudFormation, CDK or Terraform target exists |
+
+They land in `.claude/agents/`. The main Claude Code session runs
+`/orchestrate` to drive them: it dispatches each acceptance criterion of a
+plan to the agent that owns that target, then runs `reviewer` on the result.
+A subagent never commits; the main session does, after review.
+
 ## Convince yourself it is safe
 
 These are worth running once, because the whole design rests on them.

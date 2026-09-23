@@ -1,5 +1,5 @@
 name: rules-fastapi
-version: 0.1.0
+version: 0.2.0
 kind: rules
 summary: "FastAPI conventions: routing, validation, errors and the Lambda handler."
 
@@ -13,3 +13,4 @@ emits:
   - agents_md
   - cursor_rules
   - copilot_instructions
+  - claude_agents

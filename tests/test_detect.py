@@ -179,6 +179,24 @@ def test_plain_react_app_does_not_get_backend_or_infra_packs() -> None:
     assert "rules-observability" not in profile.packs_selected
 
 
+def test_express_server_selects_the_observability_pack(tmp_path: Path) -> None:
+    """A Node server is deployed and paged on like any other; the table gives
+    it the observability pack even though no `rules-express` ships."""
+    (tmp_path / "package.json").write_text(
+        '{"name": "api", "dependencies": {"express": "^5.0.0"}}', encoding="utf-8"
+    )
+    (tmp_path / "package-lock.json").write_text("{}", encoding="utf-8")
+
+    profile = detect(tmp_path)
+    assert profile.targets[0].frameworks == ["express"]
+    assert profile.packs_selected == [
+        "core",
+        "rules-security",
+        "rules-typescript",
+        "rules-observability",
+    ]
+
+
 def test_jvm_selects_the_java_pack() -> None:
     profile = profile_for("jvm-maven")
     assert "rules-java" in profile.packs_selected

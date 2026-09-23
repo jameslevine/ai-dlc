@@ -39,11 +39,15 @@ _ECOSYSTEM_PACKS: dict[str, tuple[str, ...]] = {
 
 #: Rule packs implied by a detected framework. Anything deployed to AWS also
 #: gets the observability pack, because tracing and structured logging are
-#: where a serverless service is most often silently under-instrumented.
+#: where a serverless service is most often silently under-instrumented. A
+#: Node server gets it for the same reason, though no framework pack of its
+#: own ships yet.
 _FRAMEWORK_PACKS: dict[str, tuple[str, ...]] = {
     "react": ("rules-react",),
     "next": ("rules-react",),
     "fastapi": ("rules-fastapi", "rules-observability"),
+    "express": ("rules-observability",),
+    "fastify": ("rules-observability",),
     "aws": ("rules-aws", "rules-observability"),
     "aws-cdk": ("rules-aws", "rules-observability"),
     "sam": ("rules-aws", "rules-observability"),
