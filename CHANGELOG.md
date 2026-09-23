@@ -11,6 +11,14 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+### Fixed
+
+- The release path works without a GitHub App token: `scripts/release.sh`
+  performs the same steps as `release.yml` locally, and `release.yml` fails
+  fast with the same advice when the `RELEASE_TOKEN` secret is absent. The
+  Actions `GITHUB_TOKEN` cannot push the release commit because it touches
+  workflow files.
+
 ## [1.0.0] - 2026-09-23
 
 ### Added

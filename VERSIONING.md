@@ -43,6 +43,27 @@ every line marked `# aidlc:pin` to the release commit SHA before tagging.
 
 This is not optional. Without it, pinning a version buys nothing.
 
+### Cutting a release
+
+The release commit touches `.github/workflows/*.yml`, and GitHub does not let
+the Actions `GITHUB_TOKEN` push a commit that changes a workflow file. The
+`workflows` permission it would need cannot be granted through `permissions:`,
+so a release run without extra credentials fails at the tag push with
+"refusing to allow a GitHub App to create or update workflow". Two paths:
+
+- **From GitHub.** Store a fine-grained personal access token as the
+  `RELEASE_TOKEN` secret (Contents: read/write, Workflows: read/write, this
+  repository only) and dispatch `release.yml` with the version. The workflow
+  fails fast with this advice when the secret is absent.
+- **Locally.** `scripts/release.sh <version>` runs the same steps in the same
+  order with the same guards: clean tree on `main` equal to `origin/main`,
+  `uv sync --locked`, `uv run pytest`, `uv run aidlc check`, the ref rewrite
+  and its checks, then the commit, the tags and the push.
+
+Either way the release commit exists only on the tags. `main` is never
+advanced, so its refs keep pointing at `main` and the next release rewrites
+them again from scratch.
+
 ## Making a breaking change
 
 1. **Cut the new major.** Tag `v2.0.0`, create the moving `v2`. Leave `v1`

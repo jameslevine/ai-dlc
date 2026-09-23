@@ -24,9 +24,37 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # The default GITHUB_TOKEN cannot push a commit that touches a workflow
+      # file, and the release commit rewrites `# aidlc:pin` refs inside
+      # .github/workflows/*.yml. GitHub rejects the tag push with "refusing to
+      # allow a GitHub App to create or update workflow ... without `workflows`
+      # permission", and `workflows` cannot be granted through `permissions:`.
+      #
+      # So this workflow needs a fine-grained PAT, scoped to this repository
+      # only, with Contents: read/write and Workflows: read/write, stored as
+      # the RELEASE_TOKEN secret. Without it, cut the release locally with
+      # `scripts/release.sh <version>`, which performs these same steps.
+      #
+      # `secrets` is not available in `if:`, so the check is a run step. It
+      # comes first so the message arrives before the tests run, not after.
+      - name: Preflight — a workflow-capable token is present
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_TOKEN" ]; then
+            {
+              echo "::error::RELEASE_TOKEN is not set. The default GITHUB_TOKEN cannot push a commit that touches workflow files, which the release commit does."
+              echo "::error::Either add a fine-grained PAT (Contents: read/write, Workflows: read/write, this repository only) as the RELEASE_TOKEN secret, or run 'scripts/release.sh <version>' locally."
+            } >&2
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The fallback keeps the workflow valid without the secret; the
+          # preflight above is what fails it, with an explanation.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
 
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
