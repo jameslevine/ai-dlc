@@ -96,5 +96,8 @@
       "path": "."
     }
   ],
-  "vcs": {}
+  "vcs": {
+    "host": "github",
+    "repo": "jameslevine/ai-dlc"
+  }
 }

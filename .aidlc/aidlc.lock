@@ -87,6 +87,11 @@
       "sha256": "706be6762ee29bb52b4db2b293ac9e49a2c1ae792ca2c72ea9020258d7e96ef7"
     },
     {
+      "kind": "file",
+      "path": ".github/workflows/aidlc.yml",
+      "sha256": "315a01d169cd864a5b864f33486c2f99183c654c4748446ce612cb707f167869"
+    },
+    {
       "identifier": "core",
       "kind": "block",
       "path": "AGENTS.md",
@@ -113,6 +118,6 @@
       "version": "0.1.0"
     }
   ],
-  "profile_digest": "sha256:c9f22d2248f2ac1c",
+  "profile_digest": "sha256:7bb0c182c7b2fbd0",
   "schema": 1
 }

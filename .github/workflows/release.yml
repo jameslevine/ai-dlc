@@ -49,8 +49,9 @@ jobs:
           grep -rn 'aidlc:pin' .github/workflows || true
 
           # A remaining `@main` on a pinned line means the rewrite missed it,
-          # which would ship a release that silently tracks main.
-          if grep -rn 'aidlc:pin' .github/workflows | grep -q '@main'; then
+          # which would ship a release that silently tracks main. The match
+          # is anchored on a `uses:` line so this file's own text cannot trip it.
+          if grep -rnE '^[[:space:]]*(- )?uses: [^[:space:]]+@main # aidlc:pin' .github/workflows; then
             echo "::error::a pinned reference still points at main" >&2
             exit 1
           fi

@@ -17,10 +17,22 @@ import yaml
 
 from aidlc.commands.ci import matrix
 from aidlc.commands.sync import init
-from aidlc.render.workflow import PLATFORM_REF, PLATFORM_REPO, caller_workflow
+from aidlc.render.workflow import PLATFORM_REF, PLATFORM_REPO, WORKFLOW_PATH, caller_workflow
 
 FIXTURES = Path(__file__).parent / "fixtures"
 WORKFLOWS = Path(__file__).parents[1] / ".github/workflows"
+
+
+@pytest.fixture(autouse=True)
+def outside_actions(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The matrix should arrive on stdout when not running under Actions.
+
+    A runner sets ``GITHUB_OUTPUT`` for every step, including the one running
+    this suite, and the command would then write to the step-output file and
+    print nothing. These tests are about the matrix, not the transport, so
+    they must not depend on where they happen to run.
+    """
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
 
 
 @pytest.fixture
@@ -173,12 +185,20 @@ def test_third_party_actions_are_pinned_by_sha(path: Path) -> None:
 
 
 def test_internal_references_are_marked_for_release_rewriting() -> None:
-    """Every internal ref must carry the marker the release job rewrites.
+    """Every internal ref in the platform's workflows must carry the marker the
+    release job rewrites.
 
     An unmarked one would keep pointing at main forever, so a consumer pinning
     a version would silently run whatever main says today.
+
+    The generated caller is exempt by design: it is this repository consuming
+    its own platform, and its major-tag ref is the consumer pin that must
+    survive the rewrite. The caller tests above hold it to that ref.
     """
+    generated_caller = WORKFLOWS.parents[1] / WORKFLOW_PATH
     for path in _workflow_files():
+        if path == generated_caller:
+            continue
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             stripped = line.strip()
             if stripped.startswith("uses:") and PLATFORM_REPO in stripped:

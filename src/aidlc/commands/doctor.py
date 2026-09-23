@@ -104,7 +104,10 @@ def _check_gh_auth() -> Check:
             "gh not installed",
             hint="Install the GitHub CLI to collect pull-request metrics.",
         )
-    result = probe.run(["gh", "auth", "status"])
+    # Recent gh versions persist a telemetry device id under the state dir on
+    # first run, which would make a read-only probe write to the filesystem.
+    # Disabling telemetry for this one call keeps doctor's no-write promise.
+    result = probe.run(["gh", "auth", "status"], env={"GH_TELEMETRY": "0"})
     if not result.ok:
         return Check(
             "gh auth",
