@@ -11,6 +11,8 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-23
+
 ### Added
 
 - A ticket-first lifecycle. `core` ships a `pm` agent that turns a corrected
