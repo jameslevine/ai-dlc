@@ -11,6 +11,8 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-23
+
 ### Fixed
 
 - The release path works without a GitHub App token: `scripts/release.sh`
@@ -18,6 +20,11 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   fast with the same advice when the `RELEASE_TOKEN` secret is absent. The
   Actions `GITHUB_TOKEN` cannot push the release commit because it touches
   workflow files.
+- `setup-aidlc` installs the CLI at `github.job_workflow_sha`, the commit a
+  consumer's `@v1` resolved to. It read `github.job_workflow_ref`, which is
+  an OIDC token claim rather than a context property and is empty inside a
+  job, so every `plan` job failed with "could not determine which aidlc
+  version to install".
 
 ## [1.0.0] - 2026-09-23
 
