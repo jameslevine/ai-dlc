@@ -4,7 +4,7 @@ kind: rules
 summary: "AWS conventions from the Well-Architected pillars: least privilege, data protection, reliability and cost."
 
 requires:
-  aidlc: ">=0.1,<1"
+  aidlc: ">=1,<2"
 
 applies_when:
   frameworks: [aws, aws-cdk, sam, cloudformation, terraform]

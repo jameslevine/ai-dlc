@@ -13,9 +13,11 @@ Keep `.env` files in `.gitignore` and commit a `.env.example` that lists every
 key with a placeholder value. The example documents what the process needs;
 the real values are never in the tree.
 
-Read secrets from the environment, injected by the platform: Lambda from a
-dynamic reference, CI from the repository's secret store, local from `.env`.
-Code that reads a secret from a file it ships is code that ships the secret.
+Read secrets from the platform, not from the tree: CI from the repository's
+secret store, local from `.env`. On Lambda the platform injects only a
+*reference*, the secret's name or ARN in the environment, and the code
+fetches the value at runtime from Secrets Manager or Parameter Store. Code
+that reads a secret from a file it ships is code that ships the secret.
 
 Treat a leaked secret as compromised the moment it is committed. Rotate it,
 then clean the history; removing the commit alone leaves the value valid in

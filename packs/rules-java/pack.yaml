@@ -4,7 +4,7 @@ kind: rules
 summary: "JVM conventions: nullability, immutability and exception handling."
 
 requires:
-  aidlc: ">=0.1,<1"
+  aidlc: ">=1,<2"
 
 applies_when:
   ecosystems: [jvm]

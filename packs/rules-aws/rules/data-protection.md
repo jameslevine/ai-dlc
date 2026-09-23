@@ -13,11 +13,14 @@ Deny plaintext transport in policy, not by convention: a bucket policy that
 rejects `aws:SecureTransport: false`, and an API that serves HTTPS only. A
 default that happens to be TLS today is not a control.
 
-Reference secrets dynamically, `{{resolve:ssm-secure:...}}` or
-`{{resolve:secretsmanager:...}}`, or fetch them at runtime from Parameter
-Store or Secrets Manager. Never put a literal secret in
-`Environment.Variables`: the template is committed, and the console shows the
-value to anyone who can describe the function.
+Put only a secret's name or ARN in `Environment.Variables` and fetch the
+value at runtime with Powertools `parameters.get_secret` or `get_parameter`,
+cached with a `max_age`. A dynamic reference there is the failure it looks
+like it avoids: CloudFormation does not support `ssm-secure` in Lambda
+environment variables, and `{{resolve:secretsmanager:...}}` resolves at
+deploy time into plaintext on the function configuration, shown to anyone
+who can describe the function. Use dynamic references only for properties
+CloudFormation resolves outside Lambda, such as an RDS master password.
 
 Set `PublicAccessBlockConfiguration` with all four flags true on every
 bucket. List CORS origins by name; `*` exposes the API to any page on the

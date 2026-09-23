@@ -49,7 +49,7 @@
     {
       "kind": "file",
       "path": ".cursor/rules/rules-security-secrets.mdc",
-      "sha256": "b803e20e88447f40dd728acd643e52d0b92d63fad3392e8c9986df2a503e7aa8"
+      "sha256": "b4f1f90622157db85595b1c2542a5b312172ff6708cf80d2dba32097967e47ab"
     },
     {
       "kind": "file",
@@ -79,7 +79,7 @@
     {
       "kind": "file",
       "path": ".github/instructions/rules-security-secrets.instructions.md",
-      "sha256": "855968c73e4a042278ecfe6da1ecb95ae5932ec09ca539902c1c5530080a3876"
+      "sha256": "ed100cc918e0b1d4e5358d2ad4cb9964c9f9f24a90b4ceebbf659bd5af6ffc3c"
     },
     {
       "kind": "file",
@@ -95,19 +95,19 @@
   ],
   "packs": [
     {
-      "digest": "sha256:c7fc0a59aa32b2f68a1f934e46f509e9",
+      "digest": "sha256:1b76baf4650b45bf2daad1edb00f73a3",
       "name": "core",
       "source": "builtin",
       "version": "0.2.0"
     },
     {
-      "digest": "sha256:d8c2e0e50294bd5361b760e5f80eb549",
+      "digest": "sha256:937569348ed4a6b9eb8a019686642116",
       "name": "rules-python",
       "source": "builtin",
       "version": "0.1.0"
     },
     {
-      "digest": "sha256:9c8f1cf668ed1969e431bad2e293f57d",
+      "digest": "sha256:d52dc81bd40601c85f9a784b2cf6f9dc",
       "name": "rules-security",
       "source": "builtin",
       "version": "0.1.0"

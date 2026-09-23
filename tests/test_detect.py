@@ -132,17 +132,15 @@ def test_python_frameworks_select_rule_packs() -> None:
 
 
 def test_auto_selection_skips_packs_that_are_not_installed() -> None:
-    """The framework table names packs that may not be written yet.
+    """Detection may recognise a framework whose pack is not written yet.
 
     Selecting one that does not exist would make detection fail on a perfectly
     valid repository, so automatic selection is filtered against what ships.
     An explicit list in config is deliberately *not* filtered: a name someone
     typed is intent, and a typo in it should fail loudly.
     """
-    from aidlc.detect.profile import _FRAMEWORK_PACKS
     from aidlc.packs.loader import available_builtin
 
-    assert _FRAMEWORK_PACKS["spring-boot"] == ("rules-spring",)
     assert "rules-spring" not in available_builtin(), "this test needs a genuinely absent pack"
 
     profile = profile_for("jvm-maven")
@@ -437,6 +435,54 @@ def test_terraform_directory_is_checked_with_fmt() -> None:
     assert step_command(profile, ".", StepName.LINT) == "terraform fmt -check -recursive"
 
 
+def test_terraform_modules_are_covered_by_the_root_job(tmp_path: Path) -> None:
+    """`terraform fmt -check -recursive` at the root already walks
+    `modules/*`; a job per module would check the same files again."""
+    (tmp_path / "main.tf").write_text('provider "aws" {}\n', encoding="utf-8")
+    module = tmp_path / "modules" / "net"
+    module.mkdir(parents=True)
+    (module / "main.tf").write_text('resource "aws_vpc" "main" {}\n', encoding="utf-8")
+
+    profile = detect(tmp_path)
+
+    assert [t.path for t in profile.targets] == ["."]
+    assert step_command(profile, ".", StepName.LINT) == "terraform fmt -check -recursive"
+
+
+def test_samconfig_without_a_conventional_template_is_validated_by_sam() -> None:
+    """`sam init` lets a template be called anything; the SAM CLI reads its
+    name from samconfig.toml, and `--lint` runs cfn-lint without touching
+    AWS."""
+    profile = profile_for("sam-config-only")
+    target = profile.targets[0]
+
+    assert target.ecosystem == "infra"
+    assert target.frameworks == ["aws", "sam"]
+    assert target.facts["template"] is None
+    assert step_command(profile, ".", StepName.LINT) == "sam validate --lint"
+
+
+def test_infra_target_does_not_take_install_and_test_from_a_shared_makefile() -> None:
+    """The default `sam init` layout has template.yaml, pyproject.toml and a
+    Makefile at the same root. `make install` and `make test` belong to the
+    Python job, which runs on a runner with uv; the infra job has no
+    toolchain set up and would run the tests a second time."""
+    profile = profile_for("sam-root")
+    by_ecosystem = {t.ecosystem: t for t in profile.targets if t.path == "."}
+
+    assert set(by_ecosystem) == {"infra", "python"}
+    infra = by_ecosystem["infra"]
+    assert infra.job.setup is SetupKind.NONE
+    assert [step.name for step in infra.job.steps] == [StepName.LINT]
+    assert infra.job.steps[0].command == "make lint"
+    assert infra.job.steps[0].source is StepSource.PROJECT
+
+    python = by_ecosystem["python"]
+    assert python.job.setup is SetupKind.UV
+    assert python.job.step(StepName.INSTALL).command == "make install"  # type: ignore[union-attr]
+    assert python.job.step(StepName.TEST).command == "make test"  # type: ignore[union-attr]
+
+
 def test_cdk_json_alone_is_not_an_infra_target() -> None:
     """A CDK app is a program the language adapters already build; a second
     target for it would verify nothing the first does not."""
@@ -445,20 +491,13 @@ def test_cdk_json_alone_is_not_an_infra_target() -> None:
 
 
 def test_aws_and_fastapi_frameworks_map_to_their_packs() -> None:
-    """The table is the contract, and every pack it names for AWS and FastAPI
-    now ships, so the selection is asserted in full and in order.
+    """Every pack named for AWS and FastAPI now ships, so the selection is
+    asserted in full and in order.
 
-    The order is what the packs table produces: `core`, the universal packs,
-    then each target's ecosystem pack and its frameworks alphabetically. The
+    The order is what selection produces: `core`, the universal packs, then
+    each target's ecosystem pack and its frameworks alphabetically. The
     backend target sorts before `infra`, and `aws` sorts before `fastapi`.
     """
-    from aidlc.detect.profile import _FRAMEWORK_PACKS
-
-    assert _FRAMEWORK_PACKS["fastapi"] == ("rules-fastapi", "rules-observability")
-    for framework in ("aws", "aws-cdk", "sam", "cloudformation", "terraform"):
-        assert _FRAMEWORK_PACKS[framework] == ("rules-aws", "rules-observability")
-    assert "rules-aws-cdk" not in {pack for packs in _FRAMEWORK_PACKS.values() for pack in packs}
-
     profile = profile_for("sam-fastapi")
     assert profile.packs_selected == [
         "core",
@@ -468,6 +507,46 @@ def test_aws_and_fastapi_frameworks_map_to_their_packs() -> None:
         "rules-observability",
         "rules-fastapi",
     ]
+
+
+def test_every_kind_of_aws_evidence_selects_the_aws_and_observability_packs(
+    tmp_path: Path,
+) -> None:
+    """Infrastructure rules are language-independent, and there is no CDK
+    pack: a CDK app, a plain CloudFormation template and a Terraform tree
+    all get the same two packs a SAM template does."""
+    cdk = tmp_path / "cdk"
+    cdk.mkdir()
+    (cdk / "pyproject.toml").write_text(
+        '[project]\nname = "stack"\nversion = "0.1.0"\ndependencies = ["aws-cdk-lib>=2"]\n',
+        encoding="utf-8",
+    )
+    cloudformation = tmp_path / "cloudformation"
+    cloudformation.mkdir()
+    (cloudformation / "template.yaml").write_text(
+        'AWSTemplateFormatVersion: "2010-09-09"\nResources:\n  B:\n    Type: AWS::S3::Bucket\n',
+        encoding="utf-8",
+    )
+    terraform = tmp_path / "terraform"
+    terraform.mkdir()
+    (terraform / "main.tf").write_text('provider "aws" {}\n', encoding="utf-8")
+
+    assert detect(cdk).targets[0].frameworks == ["aws-cdk"]
+    assert detect(cdk).packs_selected == [
+        "core",
+        "rules-security",
+        "rules-python",
+        "rules-aws",
+        "rules-observability",
+    ]
+    for root in (cloudformation, terraform):
+        profile = detect(root)
+        assert profile.packs_selected == [
+            "core",
+            "rules-security",
+            "rules-aws",
+            "rules-observability",
+        ], root.name
 
 
 # -- Monorepo, conflicts, escape hatch ---------------------------------------
@@ -579,6 +658,8 @@ def test_detect_on_an_empty_directory_is_not_an_error(tmp_path: Path) -> None:
         "dotnet-sln",
         "polyglot",
         "sam-fastapi",
+        "sam-root",
+        "sam-config-only",
         "terraform",
     ],
 )

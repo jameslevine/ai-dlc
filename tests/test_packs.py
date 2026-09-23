@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 
 from aidlc.packs import digest
 from aidlc.packs.loader import (
@@ -114,6 +115,18 @@ def test_agent_name_must_match_its_filename() -> None:
         load_pack_from_files(files)
 
 
+def test_agent_with_an_unknown_frontmatter_key_is_rejected() -> None:
+    """A misspelt `tool:` would otherwise load cleanly and grant nothing, so
+    the loader forbids extras exactly as the manifest schema does."""
+    files = {
+        "pack.yaml": MINIMAL_META,
+        "agents/reviewer.md": b"---\nname: reviewer\ndescription: d\ntool: Read\n---\n\nbody\n",
+    }
+    with pytest.raises(PackError, match="unknown frontmatter key 'tool'") as excinfo:
+        load_pack_from_files(files)
+    assert "name, description, tools, model, skills" in str(excinfo.value)
+
+
 def test_unknown_manifest_key_is_rejected() -> None:
     files = {"pack.yaml": MINIMAL_META + b"\nunknown_key: 1\n"}
     with pytest.raises(PackError, match="not valid"):
@@ -191,10 +204,28 @@ def test_shipped_pack_agents_are_usable(name: str) -> None:
         assert agent.body.strip()
 
 
-#: The MCP servers docs/QUICKSTART.md tells a consumer to declare. An agent
-#: may grant only these, because `mcp__<name>` binds to a key in the consumer's
-#: `mcp:` block and a name that matches no key grants nothing, silently.
-DOCUMENTED_MCP_SERVERS = frozenset({"aws-docs", "context7", "playwright", "github"})
+QUICKSTART = Path(__file__).resolve().parents[1] / "docs" / "QUICKSTART.md"
+
+
+def documented_mcp_servers() -> frozenset[str]:
+    """The MCP servers docs/QUICKSTART.md tells a consumer to declare.
+
+    Read from the `mcp:` block in the quickstart's YAML example rather than
+    listed here, so the documentation and this test cannot drift apart. An
+    agent may grant only these, because `mcp__<name>` binds to a key in the
+    consumer's `mcp:` block and a name that matches no key grants nothing,
+    silently.
+    """
+    text = QUICKSTART.read_text(encoding="utf-8")
+    for block in text.split("```yaml")[1:]:
+        parsed = yaml.safe_load(block.split("```", 1)[0])
+        if isinstance(parsed, dict) and isinstance(parsed.get("mcp"), dict):
+            return frozenset(parsed["mcp"])
+    raise AssertionError(f"{QUICKSTART} has no yaml block with an 'mcp:' mapping")
+
+
+def test_quickstart_documents_at_least_one_mcp_server() -> None:
+    assert documented_mcp_servers()
 
 
 @pytest.mark.parametrize("name", available_builtin())
@@ -202,7 +233,7 @@ def test_shipped_agents_grant_only_documented_mcp_servers(name: str) -> None:
     pack = load_builtin(name)
     for agent in pack.agents:
         granted = {tool[len("mcp__") :] for tool in agent.tools if tool.startswith("mcp__")}
-        unknown = granted - DOCUMENTED_MCP_SERVERS
+        unknown = granted - documented_mcp_servers()
         assert not unknown, f"{name}:{agent.name} grants undocumented MCP servers {unknown}"
 
 

@@ -9,9 +9,10 @@ with `include_router`. A single module holding every route is where two people
 editing different features collide on the same file.
 
 Declare request and response bodies as Pydantic models, never as bare `dict`.
-Set `response_model` and an explicit `status_code` on every route. A route
-without a response model returns whatever the handler happened to build, and
-the OpenAPI document stops describing what the client actually receives.
+Declare the return type (or `response_model`) and an explicit `status_code`
+on every route. A route without a response model returns whatever the handler
+happened to build, and the OpenAPI document stops describing what the client
+actually receives.
 
 Obtain shared concerns through `Depends`: the current user, the database
 session, the settings object. A module-level global is created at import time,

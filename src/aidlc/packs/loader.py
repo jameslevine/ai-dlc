@@ -26,6 +26,11 @@ _BUILTIN_ANCHOR = "aidlc._packs"
 #: editor noise cannot change a pack's identity.
 _IGNORED_NAMES = frozenset({".DS_Store", "Thumbs.db"})
 
+#: Every frontmatter key an agent file may carry. Anything else is rejected,
+#: as `PackMeta` rejects an unknown manifest key: a misspelt `tool:` would
+#: otherwise load cleanly and grant nothing.
+_AGENT_KEYS = ("name", "description", "tools", "model", "skills")
+
 
 class PackError(Exception):
     """A pack could not be read or is not valid. Message is for a human."""
@@ -147,6 +152,14 @@ def _read_skill(pack_name: str, directory: str, text: str, resources_: dict[str,
 def _read_agent(pack_name: str, relative: str, text: str) -> Agent:
     frontmatter, body = parse_frontmatter(text)
     stem = Path(relative).stem
+
+    for key in frontmatter:
+        if key not in _AGENT_KEYS:
+            raise PackError(
+                f"{pack_name}: agent '{stem}' has unknown frontmatter key '{key}'; "
+                f"allowed keys are {', '.join(_AGENT_KEYS)}"
+            )
+
     name = frontmatter.get("name")
     description = frontmatter.get("description")
 

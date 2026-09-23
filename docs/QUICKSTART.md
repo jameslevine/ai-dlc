@@ -2,8 +2,10 @@
 
 ## Install
 
+From a checkout of this repository:
+
 ```bash
-uv tool install --force /Users/james/Coding/ai-dlc
+uv tool install --force .
 aidlc --version
 ```
 
@@ -17,7 +19,7 @@ Reinstall after changing the CLI or a pack, since `uv tool install` copies
 rather than links:
 
 ```bash
-uv tool install --force /Users/james/Coding/ai-dlc
+uv tool install --force <path-to-this-repo>
 ```
 
 ## Check your machine
@@ -62,7 +64,7 @@ Or add the remote before `aidlc init` and it is written on the first run.
 Clone rather than running in place, so a surprise cannot touch real work:
 
 ```bash
-git clone --depth 1 file:///Users/james/Coding/<project> /tmp/probe
+git clone --depth 1 file://<path-to-project> /tmp/probe
 cd /tmp/probe && aidlc init && git diff --stat
 ```
 
@@ -149,7 +151,10 @@ aidlc check     # exits 1 and names the file
 aidlc sync      # refuses; your edit is still there
 ```
 
-Pass `--force` only when you genuinely want your edit discarded.
+Pass `--force` only when you genuinely want your edit discarded. A formatter
+or pre-commit hook that rewrites generated files (`.claude/agents/*.md`,
+`.mcp.json`, `.vscode/mcp.json`, `.github/instructions/*.md`) will make `sync`
+report them as hand-edited; exclude those paths from the formatter.
 
 **It notices when the project changes.** Add a new language and watch it be
 detected:

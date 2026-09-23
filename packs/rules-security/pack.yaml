@@ -4,7 +4,7 @@ kind: rules
 summary: "Security basics that apply to every repository: secrets, input validation and supply chain."
 
 requires:
-  aidlc: ">=0.1,<1"
+  aidlc: ">=1,<2"
 
 applies_when:
   always: true

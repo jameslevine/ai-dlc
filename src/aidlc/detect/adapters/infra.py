@@ -30,16 +30,33 @@ class InfraAdapter:
         candidates = set(index.dirs_containing(*_TEMPLATES, _SAM_CONFIG))
         candidates.update(self._dirname(path) for path in index.files if path.endswith(".tf"))
 
+        # Parents before children, so that a Terraform module directory can
+        # see the root that already claims it.
+        ordered = sorted(candidates, key=lambda d: (0 if d == "." else d.count("/") + 1, d))
+
         results: list[TargetFacts] = []
-        for directory in sorted(candidates):
+        terraform_roots: list[str] = []
+        for directory in ordered:
             facts = self._inspect(index, directory)
-            if facts is not None:
-                results.append(facts)
+            if facts is None:
+                continue
+            if facts.facts.get("kind") == "terraform":
+                # One job per tree: `terraform fmt -check -recursive` at the
+                # root already covers `modules/*`, and a job per module would
+                # check the same files as many times as there are modules.
+                if any(self._is_within(directory, root) for root in terraform_roots):
+                    continue
+                terraform_roots.append(directory)
+            results.append(facts)
         return results
 
     @staticmethod
     def _dirname(path: str) -> str:
         return path.rsplit("/", 1)[0] if "/" in path else "."
+
+    @staticmethod
+    def _is_within(directory: str, ancestor: str) -> bool:
+        return ancestor == "." or directory.startswith(ancestor + "/")
 
     def _inspect(self, index: RepoIndex, directory: str) -> TargetFacts | None:
         prefix = "" if directory == "." else directory + "/"
@@ -69,7 +86,14 @@ class InfraAdapter:
             "samconfig": samconfig,
             "terraform_files": [name.rsplit("/", 1)[-1] for name in terraform],
         }
-        facts.declared_steps = steps_from_makefile(index, directory)
+        # `sam init` puts template.yaml, pyproject.toml and a Makefile with
+        # `install:` and `test:` at the same root. Those two targets belong
+        # to the language target that shares the directory: it runs them on
+        # a runner with its toolchain installed, and this job has none. Only
+        # `lint` is an infrastructure step.
+        declared = steps_from_makefile(index, directory)
+        if StepName.LINT in declared:
+            facts.declared_steps = {StepName.LINT: declared[StepName.LINT]}
         return facts
 
     @staticmethod

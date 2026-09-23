@@ -4,7 +4,7 @@ kind: rules
 summary: "TypeScript and JavaScript conventions: types, modules and test style."
 
 requires:
-  aidlc: ">=0.1,<1"
+  aidlc: ">=1,<2"
 
 applies_when:
   ecosystems: [node]

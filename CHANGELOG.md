@@ -88,3 +88,13 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 - AGENTS.md now lists every CI step for each target, in the order CI runs
   them. `format` and `audit` were left out by a hard-coded list, which made
   "they are what CI runs" false.
+- The infra target no longer takes `install` and `test` from a Makefile it
+  shares with a language target, as in the default `sam init` layout. Its job
+  ran `uv` on a runner with no uv and ran the tests a second time; only a
+  `lint` target is an infrastructure step. Terraform also yields one job per
+  tree rather than one per module.
+- `rules-aws` no longer recommends dynamic references in Lambda
+  `Environment.Variables`: `ssm-secure` is unsupported there and a
+  `secretsmanager` reference resolves to plaintext on the function
+  configuration. The rule now says to put the secret's name or ARN in the
+  environment and fetch the value at runtime.

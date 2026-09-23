@@ -9,10 +9,11 @@ measurement rather than the default. The default timeout is three seconds,
 which fails a cold start behind a VPC; the default memory buys the least CPU,
 which is often the most expensive per request.
 
-Give every asynchronous invocation a retry policy with backoff and a
-`DeadLetterQueue` or an `OnFailure` destination. A failed event with nowhere
-to go is dropped silently, and the first sign is a customer asking where their
-order went.
+Set `MaximumRetryAttempts` (0 to 2) and `MaximumEventAgeInSeconds` on every
+asynchronous invocation, with a `DeadLetterQueue` or an `OnFailure`
+destination; backoff belongs to SQS, Step Functions and SDK clients, not to
+Lambda's async retries. A failed event with nowhere to go is dropped silently,
+and the first sign is a customer asking where their order went.
 
 Make writes idempotent with an idempotency key, so a retried event does not
 create a second record. Powertools `@idempotent` on the handler is the

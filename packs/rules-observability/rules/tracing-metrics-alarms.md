@@ -5,9 +5,11 @@ always: false
 ---
 
 Set `Tracing: Active` on every function and `TracingEnabled: true` on every
-API. Decorate handlers with Powertools `Tracer` and patch outbound clients so
-that DynamoDB, SQS and HTTP calls appear as subsegments. A trace that stops at
-the function boundary cannot say which dependency was slow.
+REST API (`AWS::Serverless::Api`); an HTTP API has no X-Ray, so give it
+`AccessLogSettings` instead. Decorate handlers with Powertools `Tracer` and
+patch outbound clients so that DynamoDB, SQS and HTTP calls appear as
+subsegments. A trace that stops at the function boundary cannot say which
+dependency was slow.
 
 Record business metrics with Powertools `Metrics`, which writes Embedded
 Metric Format to the log so that no metric call can fail or add latency.

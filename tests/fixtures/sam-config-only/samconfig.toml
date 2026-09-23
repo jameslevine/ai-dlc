@@ -1,0 +1,9 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "orders"
+template_file = "stack.yaml"
+
+[default.deploy.parameters]
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"

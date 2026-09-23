@@ -26,9 +26,9 @@ consumers see even when the text is identical.
 | `version` | the pack's own semver; see below |
 | `kind` | `rules`, `skills`, `models`, `evals`, `lifecycle` or `mixed` |
 | `summary` | one sentence, shown in listings |
-| `requires` | `{aidlc: ">=0.1,<1"}`: the CLI range this pack was written against |
+| `requires` | `{aidlc: ">=1,<2"}`: the CLI range this pack was written against |
 | `applies_when` | when detection selects the pack automatically |
-| `emits` | `agents_md`, `cursor_rules`, `copilot_instructions`, `skills`, `mcp` |
+| `emits` | `agents_md`, `cursor_rules`, `copilot_instructions`, `skills`, `mcp`, `claude_agents` |
 
 `applies_when` takes one of three forms:
 
