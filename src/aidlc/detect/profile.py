@@ -37,13 +37,19 @@ _ECOSYSTEM_PACKS: dict[str, tuple[str, ...]] = {
     "dotnet": ("rules-dotnet",),
 }
 
-#: Rule packs implied by a detected framework.
-_FRAMEWORK_PACKS: dict[str, str] = {
-    "react": "rules-react",
-    "next": "rules-react",
-    "aws-cdk": "rules-aws-cdk",
-    "fastapi": "rules-fastapi",
-    "spring-boot": "rules-spring",
+#: Rule packs implied by a detected framework. Anything deployed to AWS also
+#: gets the observability pack, because tracing and structured logging are
+#: where a serverless service is most often silently under-instrumented.
+_FRAMEWORK_PACKS: dict[str, tuple[str, ...]] = {
+    "react": ("rules-react",),
+    "next": ("rules-react",),
+    "fastapi": ("rules-fastapi", "rules-observability"),
+    "aws": ("rules-aws", "rules-observability"),
+    "aws-cdk": ("rules-aws", "rules-observability"),
+    "sam": ("rules-aws", "rules-observability"),
+    "cloudformation": ("rules-aws", "rules-observability"),
+    "terraform": ("rules-aws", "rules-observability"),
+    "spring-boot": ("rules-spring",),
 }
 
 
@@ -165,7 +171,7 @@ def _select_packs(targets: list[Target], config: Config) -> list[str]:
         # Infrastructure rules are language-independent: a CDK app written in
         # TypeScript wants the same guidance as one written in Python.
         for framework in target.frameworks:
-            if pack := _FRAMEWORK_PACKS.get(framework):
+            for pack in _FRAMEWORK_PACKS.get(framework, ()):
                 selected.setdefault(pack, None)
 
     installed = set(available_builtin())

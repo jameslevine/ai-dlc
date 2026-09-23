@@ -152,6 +152,7 @@ def steps_from_makefile(index: RepoIndex, directory: str) -> dict[StepName, str]
         StepName.FORMAT: ("format",),
         StepName.TYPECHECK: ("typecheck",),
         StepName.TEST: ("test",),
+        StepName.AUDIT: ("audit",),
         StepName.BUILD: ("build",),
     }
     return {

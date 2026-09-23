@@ -76,7 +76,7 @@ class PythonAdapter:
             "layout": "src"
             if index.has(prefix + "src/__init__.py") or self._has_src(index, directory)
             else "flat",
-            "type_checker": self._type_checker(tool),
+            "type_checker": self._type_checker(tool, dependencies),
             "test_framework": "pytest" if self._has_pytest(tool, dependencies) else None,
             "linter": "ruff" if "ruff" in tool else None,
             "lockfile": lockfile,
@@ -134,11 +134,20 @@ class PythonAdapter:
         return [floor] if floor in _KNOWN_VERSIONS else ["3.12"]
 
     @staticmethod
-    def _type_checker(tool: dict[str, Any]) -> str | None:
-        if "pyright" in tool:
-            return "pyright"
-        if "mypy" in tool:
-            return "mypy"
+    def _type_checker(tool: dict[str, Any], dependencies: list[str]) -> str | None:
+        """Which type checker the project runs, if any.
+
+        A `[tool.pyright]` or `[tool.mypy]` table is the strongest evidence and
+        wins outright. Failing that, the checker being a declared dependency is
+        enough: a project that installs pyright into its dev group intends to
+        run it, whether or not it has written a config table yet.
+        """
+        for checker in ("pyright", "mypy"):
+            if checker in tool:
+                return checker
+        for checker in ("pyright", "mypy"):
+            if any(dep.startswith(checker) for dep in dependencies):
+                return checker
         return None
 
     @staticmethod
@@ -153,10 +162,16 @@ class PythonAdapter:
             install = "uv sync --locked" if locked else "uv sync"
             run = "uv run "
             setup = SetupKind.UV
+            # `--with` runs pip-audit from an ephemeral environment, so the
+            # project's own lockfile never has to list it. The other managers
+            # have no equivalent: `poetry run pip-audit` fails unless the
+            # project installs pip-audit itself, so they get no default.
+            audit = "uv run --with pip-audit pip-audit"
         elif manager == "poetry":
             install = "poetry install --no-interaction"
             run = "poetry run "
             setup = SetupKind.NONE
+            audit = ""
         else:
             # Install from whatever this project actually has. Emitting
             # `-r requirements.txt` for a project that has none produces CI
@@ -169,6 +184,7 @@ class PythonAdapter:
                 install = ""
             run = ""
             setup = SetupKind.NONE
+            audit = ""
 
         defaults: dict[StepName, str] = {StepName.INSTALL: install}
         if facts.facts.get("linter") == "ruff":
@@ -178,5 +194,7 @@ class PythonAdapter:
             defaults[StepName.TYPECHECK] = f"{run}{checker}"
         if facts.facts.get("test_framework") == "pytest":
             defaults[StepName.TEST] = f"{run}pytest"
+        if audit:
+            defaults[StepName.AUDIT] = audit
 
         return make_job(facts, setup, defaults)

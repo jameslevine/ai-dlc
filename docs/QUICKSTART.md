@@ -46,6 +46,17 @@ aidlc init
 Then read what it produced. `AGENTS.md` is the canonical file every major
 agent reads; the rest supplement it for one tool each.
 
+One file will be missing: the `.github/workflows/aidlc.yml` caller is only
+written when `origin` points at GitHub, because a workflow that can never run
+is noise. On a brand-new repository, add the remote and sync:
+
+```bash
+git remote add origin git@github.com:you/aidlc-demo.git
+aidlc sync
+```
+
+Or add the remote before `aidlc init` and it is written on the first run.
+
 ## Try it on a real project, safely
 
 Clone rather than running in place, so a surprise cannot touch real work:

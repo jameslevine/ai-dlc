@@ -48,3 +48,14 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
   token budget on the always-loaded context, plus detection of rules that are
   unreachable, duplicated, or match no file in the repository. Reports the
   estimated context cost whether or not anything fails.
+- An `audit` build step, between `test` and `build`, for dependency
+  vulnerability scanning. uv projects run `pip-audit` from an ephemeral
+  environment; npm, pnpm and yarn run their manager's own `audit`. A Makefile
+  target or npm script named `audit` is honoured over the default.
+- An `infra` adapter: a directory holding a SAM or CloudFormation template,
+  a `samconfig.toml`, or Terraform files is a target of its own, linted with
+  `cfn-lint` or `terraform fmt -check`. It selects the AWS and observability
+  packs. CDK apps stay with the language adapters that already build them.
+- Python typecheck detection from dependencies: `pyright` or `mypy` declared
+  in a dependency group is enough to add the step, so a project no longer
+  needs a `[tool.pyright]` table it has nothing to put in.

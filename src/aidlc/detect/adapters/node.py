@@ -53,7 +53,19 @@ _SCRIPT_STEPS: dict[str, StepName] = {
     "typecheck": StepName.TYPECHECK,
     "type-check": StepName.TYPECHECK,
     "test": StepName.TEST,
+    "audit": StepName.AUDIT,
     "build": StepName.BUILD,
+}
+
+#: Dependency audit per package manager. Each one is the manager's own
+#: first-party command, so nothing extra is installed. Bun has no audit
+#: subcommand, so a bun project gets no default and relies on a declared
+#: `audit` script. `high` is the threshold because failing CI on every
+#: moderate advisory in a transitive dependency trains people to ignore the step.
+_AUDIT_COMMANDS: dict[str, str] = {
+    "npm": "npm audit --audit-level=high",
+    "pnpm": "pnpm audit --audit-level=high",
+    "yarn": "yarn npm audit --severity high",
 }
 
 _SEMVER_MAJOR = re.compile(r"(\d+)")
@@ -178,5 +190,8 @@ class NodeAdapter:
         if facts.facts.get("typescript"):
             runner = "bunx" if facts.manager == "bun" else "npx"
             defaults[StepName.TYPECHECK] = f"{runner} tsc --noEmit"
+
+        if audit := _AUDIT_COMMANDS.get(facts.manager or ""):
+            defaults[StepName.AUDIT] = audit
 
         return make_job(facts, SetupKind.NODE, defaults)

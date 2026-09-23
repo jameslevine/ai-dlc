@@ -173,6 +173,44 @@ def test_pip_project_with_requirements_uses_it(tmp_path: Path) -> None:
     )
 
 
+def test_uv_project_audits_its_dependencies_and_a_pip_project_does_not(tmp_path: Path) -> None:
+    """`uv run --with` can run pip-audit without the project listing it. pip
+    has no equivalent, so emitting an audit there would fail on a tool that
+    was never installed."""
+    assert step_command(profile_for("python-uv"), ".", StepName.AUDIT) == (
+        "uv run --with pip-audit pip-audit"
+    )
+
+    (tmp_path / "requirements.txt").write_text("httpx\n", encoding="utf-8")
+    assert step_command(detect(tmp_path), ".", StepName.AUDIT) is None
+
+
+def test_audit_runs_after_test_and_before_build() -> None:
+    """A known CVE in a dependency must never mask a failing test."""
+    names = list(StepName)
+    assert names.index(StepName.TEST) < names.index(StepName.AUDIT) < names.index(StepName.BUILD)
+
+
+def test_type_checker_declared_as_a_dependency_yields_a_typecheck_step() -> None:
+    """A project that installs pyright into its dev group intends to run it,
+    whether or not it has written a `[tool.pyright]` table yet."""
+    profile = profile_for("sam-fastapi")
+    backend = next(t for t in profile.targets if t.path == "backend")
+
+    assert backend.facts["type_checker"] == "pyright"
+    assert step_command(profile, "backend", StepName.TYPECHECK) == "uv run pyright"
+
+
+def test_type_checker_config_table_beats_the_dependency_list(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "x"\nversion = "0.1.0"\n'
+        '[dependency-groups]\ndev = ["pyright"]\n'
+        "[tool.mypy]\nstrict = true\n",
+        encoding="utf-8",
+    )
+    assert detect(tmp_path).targets[0].facts["type_checker"] == "mypy"
+
+
 def test_python_poetry_project_uses_poetry_commands() -> None:
     profile = profile_for("python-poetry")
     target = profile.targets[0]
@@ -233,6 +271,11 @@ def test_node_without_scripts_falls_back_to_defaults() -> None:
     assert step_command(profile, ".", StepName.TYPECHECK) is None
 
 
+def test_npm_project_audits_its_dependencies() -> None:
+    profile = profile_for("polyglot")
+    assert step_command(profile, "web", StepName.AUDIT) == "npm audit --audit-level=high"
+
+
 # -- JVM ---------------------------------------------------------------------
 
 
@@ -288,6 +331,81 @@ def test_dotnet_project_prefers_the_solution() -> None:
     assert target.job.setup is SetupKind.DOTNET
     assert target.job.versions == ["9.0.100"]
     assert target.path == ".", "the solution at the root wins over the nested csproj"
+
+
+# -- Infrastructure ----------------------------------------------------------
+
+
+def test_sam_template_is_an_infra_target_linted_with_cfn_lint() -> None:
+    profile = profile_for("sam-fastapi")
+    infra = next(t for t in profile.targets if t.path == "infra")
+
+    assert infra.ecosystem == "infra"
+    assert infra.languages == ["YAML"]
+    assert infra.manager is None
+    assert infra.frameworks == ["aws", "sam"]
+    # pipx is on the runner image, so no toolchain setup is needed.
+    assert infra.job.setup is SetupKind.NONE
+    assert infra.job.versions == []
+    assert step_command(profile, "infra", StepName.LINT) == "pipx run cfn-lint template.yaml"
+
+
+def test_sam_template_using_intrinsic_tags_is_still_recognised(tmp_path: Path) -> None:
+    """Almost every real template uses `!Ref` or `!Sub`, which a general
+    YAML parser rejects. The template is claimed by what it says, not by
+    whether the parser happens to like it."""
+    (tmp_path / "template.yml").write_text(
+        "Transform: AWS::Serverless-2016-10-31\n"
+        "Resources:\n  Fn:\n    Type: AWS::Serverless::Function\n"
+        "    Properties:\n      Role: !GetAtt Role.Arn\n",
+        encoding="utf-8",
+    )
+    profile = detect(tmp_path)
+
+    assert [t.ecosystem for t in profile.targets] == ["infra"]
+    assert profile.targets[0].frameworks == ["aws", "sam"]
+    assert step_command(profile, ".", StepName.LINT) == "pipx run cfn-lint template.yml"
+
+
+def test_plain_cloudformation_template_is_not_labelled_sam(tmp_path: Path) -> None:
+    (tmp_path / "template.yaml").write_text(
+        'AWSTemplateFormatVersion: "2010-09-09"\nResources:\n  B:\n    Type: AWS::S3::Bucket\n',
+        encoding="utf-8",
+    )
+    assert detect(tmp_path).targets[0].frameworks == ["aws", "cloudformation"]
+
+
+def test_terraform_directory_is_checked_with_fmt() -> None:
+    profile = profile_for("terraform")
+    target = profile.targets[0]
+
+    assert target.ecosystem == "infra"
+    assert target.languages == ["HCL"]
+    assert target.frameworks == ["aws", "terraform"]
+    assert target.job.setup is SetupKind.NONE
+    assert step_command(profile, ".", StepName.LINT) == "terraform fmt -check -recursive"
+
+
+def test_cdk_json_alone_is_not_an_infra_target() -> None:
+    """A CDK app is a program the language adapters already build; a second
+    target for it would verify nothing the first does not."""
+    profile = profile_for("polyglot")
+    assert "infra" not in {t.ecosystem for t in profile.targets}
+
+
+def test_aws_and_fastapi_frameworks_map_to_their_packs() -> None:
+    """The table is the contract; the packs it names do not all ship yet, so
+    selection is asserted only as a subset of what is installed."""
+    from aidlc.detect.profile import _FRAMEWORK_PACKS
+    from aidlc.packs.loader import available_builtin
+
+    assert _FRAMEWORK_PACKS["fastapi"] == ("rules-fastapi", "rules-observability")
+    for framework in ("aws", "aws-cdk", "sam", "cloudformation", "terraform"):
+        assert _FRAMEWORK_PACKS[framework] == ("rules-aws", "rules-observability")
+    assert "rules-aws-cdk" not in {pack for packs in _FRAMEWORK_PACKS.values() for pack in packs}
+
+    profile = profile_for("sam-fastapi")
+    assert set(profile.packs_selected) <= set(available_builtin())
 
 
 # -- Monorepo, conflicts, escape hatch ---------------------------------------
@@ -398,6 +516,8 @@ def test_detect_on_an_empty_directory_is_not_an_error(tmp_path: Path) -> None:
         "rust-cargo",
         "dotnet-sln",
         "polyglot",
+        "sam-fastapi",
+        "terraform",
     ],
 )
 def test_every_fixture_produces_a_runnable_target(fixture: str) -> None:

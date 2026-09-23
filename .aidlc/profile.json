@@ -76,6 +76,11 @@
             "command": "uv run pytest",
             "name": "test",
             "source": "default"
+          },
+          {
+            "command": "uv run --with pip-audit pip-audit",
+            "name": "audit",
+            "source": "default"
           }
         ],
         "versions": [

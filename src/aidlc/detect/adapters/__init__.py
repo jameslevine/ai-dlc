@@ -9,6 +9,7 @@ generating CI for both is the correct answer.
 from __future__ import annotations
 
 from aidlc.detect.adapters.base import EcosystemAdapter, TargetFacts
+from aidlc.detect.adapters.infra import InfraAdapter
 from aidlc.detect.adapters.jvm import JvmAdapter
 from aidlc.detect.adapters.node import NodeAdapter
 from aidlc.detect.adapters.python import PythonAdapter
@@ -22,6 +23,7 @@ ADAPTERS: tuple[EcosystemAdapter, ...] = (
     GoAdapter(),
     RustAdapter(),
     DotnetAdapter(),
+    InfraAdapter(),
 )
 
 

@@ -193,6 +193,20 @@ def test_dispatcher_guards_against_an_empty_matrix() -> None:
     assert "any == 'true'" in parsed["jobs"]["build"]["if"]
 
 
+def test_audit_step_is_declared_and_passed_through() -> None:
+    """A step the matrix emits but the workflow does not declare is rejected
+    by Actions at call time, so every StepName must exist at both ends."""
+    reusable = yaml.safe_load((WORKFLOWS / "reusable-lang-ci.yml").read_text(encoding="utf-8"))
+    dispatcher = yaml.safe_load((WORKFLOWS / "aidlc-ci.yml").read_text(encoding="utf-8"))
+
+    inputs = reusable[True]["workflow_call"]["inputs"]  # `on:` parses as True
+    assert "audit" in inputs
+    assert dispatcher["jobs"]["build"]["with"]["audit"] == "${{ matrix.audit }}"
+
+    step_names = [step["name"] for step in reusable["jobs"]["build"]["steps"] if "name" in step]
+    assert step_names.index("test") < step_names.index("audit") < step_names.index("build")
+
+
 def test_dispatcher_checks_for_drift_before_building() -> None:
     """The committed profile is an unverifiable claim without this step."""
     parsed = yaml.safe_load((WORKFLOWS / "aidlc-ci.yml").read_text(encoding="utf-8"))

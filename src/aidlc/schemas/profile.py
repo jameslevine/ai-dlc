@@ -55,8 +55,11 @@ class SetupKind(StrEnum):
 class StepName(StrEnum):
     """The fixed vocabulary of build steps.
 
-    Deliberately small and closed. Every ecosystem maps onto these six, and a
-    closed set is what lets one generic CI workflow serve all of them.
+    Deliberately small and closed. Every ecosystem maps onto these seven, and
+    a closed set is what lets one generic CI workflow serve all of them.
+
+    Declaration order is execution order: CI runs the steps in the order they
+    are listed here, and `aidlc ci matrix` emits them in the same order.
     """
 
     INSTALL = "install"
@@ -64,6 +67,7 @@ class StepName(StrEnum):
     FORMAT = "format"
     TYPECHECK = "typecheck"
     TEST = "test"
+    AUDIT = "audit"
     BUILD = "build"
 
 

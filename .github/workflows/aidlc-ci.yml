@@ -72,6 +72,7 @@ jobs:
       format: ${{ matrix.format }}
       typecheck: ${{ matrix.typecheck }}
       test: ${{ matrix.test }}
+      audit: ${{ matrix.audit }}
       build: ${{ matrix.build }}
 
   secret-scan:

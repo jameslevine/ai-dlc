@@ -1,6 +1,6 @@
 # One build workflow for every language.
 #
-# It receives a job spec as inputs and runs six named steps, each skipped when
+# It receives a job spec as inputs and runs seven named steps, each skipped when
 # its command is empty. Adding an ecosystem means adding one guarded setup step
 # and one adapter in the CLI; there is still exactly one workflow to version.
 #
@@ -8,7 +8,7 @@
 # The runner resolves and downloads every action referenced by a job during
 # "Set up job", before any `if:` is evaluated, so the skipped setup steps below
 # are still fetched. That costs a few seconds per run. The alternative, a job
-# per ecosystem, avoids the download but duplicates the six build steps six
+# per ecosystem, avoids the download but duplicates the seven build steps six
 # times over, which is far more to keep correct across a version bump. If that
 # download cost ever matters more than the duplication, split this into
 # per-ecosystem jobs with `if:` at job level; a skipped job downloads nothing.
@@ -42,7 +42,7 @@ on:
         type: string
         required: false
         default: ""
-      # The six build steps. An empty string skips the step rather than
+      # The seven build steps. An empty string skips the step rather than
       # running a no-op, so the log shows only what this project actually does.
       install:
         type: string
@@ -61,6 +61,11 @@ on:
         required: false
         default: ""
       test:
+        type: string
+        required: false
+        default: ""
+      audit:
+        description: Dependency vulnerability audit. Runs after test so a known CVE never masks a failing test.
         type: string
         required: false
         default: ""
@@ -156,6 +161,10 @@ jobs:
       - name: test
         if: inputs.test != ''
         run: ${{ inputs.test }}
+
+      - name: audit
+        if: inputs.audit != ''
+        run: ${{ inputs.audit }}
 
       - name: build
         if: inputs.build != ''
