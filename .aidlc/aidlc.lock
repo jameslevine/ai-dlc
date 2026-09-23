@@ -4,27 +4,32 @@
     {
       "kind": "file",
       "path": ".agents/skills/build/SKILL.md",
-      "sha256": "c242e58dc9f1b20d69d22c5b659f5cc011a037598d675bd83166d62451780f46"
+      "sha256": "92f175eaea6339ac93184a273532ffc8d9234c418b4517b3a75d6106d70d46c6"
     },
     {
       "kind": "file",
       "path": ".agents/skills/orchestrate/SKILL.md",
-      "sha256": "04c76a8db49e36f600da5079ce8c2790d1ea34ad42c51cf7c5f9ec5b42e54b98"
+      "sha256": "d354a07df8899a328ae7009ba5ef4b97989b596fc7b78e6b1c42d48a8d09e7f3"
     },
     {
       "kind": "file",
       "path": ".agents/skills/plan/SKILL.md",
-      "sha256": "c0416140a855964b7eca08f59cf1f7e0553b09c6621a4730717fad0b0a3571d3"
+      "sha256": "8cbaa366e365b4e1e9b375acddab4114996a017b74402212cd0a1a644f8e9aeb"
     },
     {
       "kind": "file",
       "path": ".agents/skills/review/SKILL.md",
-      "sha256": "7cc4f721c0b7562d3934c40d3f8256c887c4b01af8d334c17c549e4da1924d53"
+      "sha256": "d9ee3fc4813e124e3adb89106464dd8eaabea8dc078244509a348301ca84f694"
+    },
+    {
+      "kind": "file",
+      "path": ".claude/agents/pm.md",
+      "sha256": "a2af6e2691b8ae0fa51f165a99c35bf9c9cf740105b0050cd68e4de865c214c0"
     },
     {
       "kind": "file",
       "path": ".claude/agents/reviewer.md",
-      "sha256": "e038c78130615b73a22ff94e0a3fbc16122b58ff01feb5dc152a207c8fcc30b1"
+      "sha256": "99cb67be61d78373643e34e1506b345334d91518ef7589afa50a16a08710a9e8"
     },
     {
       "kind": "file",
@@ -95,15 +100,15 @@
       "identifier": "core",
       "kind": "block",
       "path": "AGENTS.md",
-      "sha256": "sha256:5d7794bcd426377e"
+      "sha256": "sha256:9b8dafe8dcada8b1"
     }
   ],
   "packs": [
     {
-      "digest": "sha256:1b76baf4650b45bf2daad1edb00f73a3",
+      "digest": "sha256:d2bc23da365a2056dcd61dabd5903f1b",
       "name": "core",
       "source": "builtin",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
       "digest": "sha256:937569348ed4a6b9eb8a019686642116",

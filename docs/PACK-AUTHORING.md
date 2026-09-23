@@ -62,7 +62,7 @@ always: false
   full copy in Cursor and Copilot, which load it only for matching files.
 
 Default to `always: false`. The `core` pack is the only one that should carry
-always-on rules, and its three are the whole working agreement.
+always-on rules, and its four are the whole working agreement.
 
 ## What `aidlc eval --tier 1` judges
 

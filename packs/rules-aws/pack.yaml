@@ -1,5 +1,5 @@
 name: rules-aws
-version: 0.2.0
+version: 0.3.0
 kind: rules
 summary: "AWS conventions from the Well-Architected pillars: least privilege, data protection, reliability and cost."
 

@@ -1,4 +1,4 @@
-<!-- aidlc:begin id=core version=core@0.2.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:5d7794bcd426377e -->
+<!-- aidlc:begin id=core version=core@0.3.0+rules-security@0.1.0+rules-python@0.1.0 digest=sha256:9b8dafe8dcada8b1 -->
 ## This project
 
 **Python**, managed with uv.
@@ -38,6 +38,19 @@ requester's decision, not yours.
 
 If you disagree with the approach, say so in a sentence or two and then build
 the thing that was asked for, under stated assumptions.
+
+### Work starts from a ticket and progress lives on it
+
+Every task maps to a GitHub issue before any code is written, and the issue
+number appears in the commit message: `refs #N` while in progress, `closes #N`
+when the acceptance criteria are met.
+
+A bug or todo noticed mid-task is filed immediately with `gh issue create` and
+left for `pm` to prioritise. It is never kept in a note, a todo list or session
+memory; those vanish with the session, and the issue does not.
+
+Decisions, human corrections and verification output are recorded as comments
+on the issue, so nothing about progress lives only in a session.
 
 ### Claims about the code must be verified
 

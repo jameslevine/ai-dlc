@@ -9,7 +9,9 @@ description: >-
 
 # Review a completed unit of work
 
-Write `ai-dlc/<NNN>-<slug>/review.md`.
+Post the review as a comment on the unit's epic issue, the one named in
+`ai-dlc/<NNN>-<slug>/plan.md` as `epic`. Close the epic only when every
+child issue is closed. No `review.md` is written.
 
 ## Sections
 
@@ -28,9 +30,11 @@ different outcomes and should not read identically.
 
 ## The loop-closing section
 
-This is the reason the lifecycle exists. Look back at the corrections logged in
-`build.md` and ask which of them were a *general* failure rather than a
-one-off. Each general one becomes a proposed change to a rule pack.
+This is the reason the lifecycle exists. Look back at the corrections logged as
+comments on the unit's child issues and ask which of them were a *general*
+failure rather than a one-off. Each general one becomes a proposed change to a
+rule pack, filed as its own issue labelled `type:rules` so that `pm` can
+schedule it.
 
 Propose deletions as readily as additions. Instruction files are known to add
 over 20% to token cost without reliably improving task success, so a rule that
@@ -41,7 +45,7 @@ Write each proposal concretely enough to act on:
 
 ```markdown
 - **Add** to `rules-python`: "Prefer pathlib over os.path" — corrected three
-  times in builds 004, 006, 007.
+  times on #41, #57 and #63.
 - **Delete** from `core`: "Write clear code" — never referenced in any
   correction; unmeasurable and costs tokens on every turn.
 ```

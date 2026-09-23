@@ -1,5 +1,5 @@
 name: rules-fastapi
-version: 0.2.0
+version: 0.3.0
 kind: rules
 summary: "FastAPI conventions: routing, validation, errors and the Lambda handler."
 

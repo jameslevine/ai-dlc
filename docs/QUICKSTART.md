@@ -118,20 +118,34 @@ fails; each agent says in its report that it worked without that server.
 
 ## Agents
 
-Four Claude Code subagents ship, each brought by the pack that owns its part
+Five Claude Code subagents ship, each brought by the pack that owns its part
 of the repository:
 
 | agent | pack | selected when |
 |---|---|---|
+| `pm` | `core` | always |
 | `reviewer` | `core` | always |
 | `backend` | `rules-fastapi` | a target depends on FastAPI |
 | `frontend` | `rules-react` | a target depends on React or Next |
 | `infra` | `rules-aws` | a SAM, CloudFormation, CDK or Terraform target exists |
 
 They land in `.claude/agents/`. The main Claude Code session runs
-`/orchestrate` to drive them: it dispatches each acceptance criterion of a
-plan to the agent that owns that target, then runs `reviewer` on the result.
-A subagent never commits; the main session does, after review.
+`/orchestrate` to drive them: it dispatches each issue of a plan to the agent
+that owns that target, then runs `reviewer` on the result. A subagent never
+commits; the main session does, after review.
+
+### Ticket-first
+
+GitHub issues are the source of truth for work and progress. Every task or
+session starts with `pm`, which turns the plan into an epic and one issue per
+acceptance criterion, prioritises them, and keeps a pinned `Roadmap` issue
+current. Agents work from issues and post their reports as comments on them.
+A bug or todo found on the way is filed as an issue at once and left for `pm`
+to prioritise. When `pm` cannot size a ticket it labels it `needs:spike` or
+`needs:refinement`; the orchestrator routes it to the agent for that area in
+refinement mode, and hands it back to `pm` once the spike comment lands.
+Nothing about progress lives in session state: not in a plan file, a todo
+list or memory.
 
 ## Convince yourself it is safe
 

@@ -33,11 +33,27 @@ the orchestrator to apply; do not apply it.
 
 ## Report
 
-Findings first, most severe first, each with `file:line` and the rule or
-criterion it breaks. Then the check results, pasted. Then the criteria, one
-line each: met, unmet or changed, with the evidence.
+Your brief names an issue (`Issue: #N`). Findings first, most severe first,
+each with `file:line` and the rule or criterion it breaks. Then the check
+results, pasted. Then the criteria, one line each: met, unmet or changed,
+with the evidence.
 
 End with the section that closes the loop: the rule changes these findings
 suggest, written the way the `review` skill writes them. A finding that is a
 general failure rather than a one-off becomes a proposed addition; a rule that
 prevented nothing becomes a proposed deletion.
+
+Then post the whole report as a comment on that issue:
+`gh issue comment N --body-file -`. A report that lives only in the session
+is lost when the session ends.
+
+## Refinement mode
+
+When dispatched to refine or spike a ticket, answer the question; do not
+implement, and in your case do not write anything at all: this mode is as
+read-only as the rest of you. Investigate within the timebox, reading code
+and running the project's own checks, and post one comment on the issue
+with: findings; the answer to `pm`'s question; risks; a rough size (S, M or
+L); and rewritten acceptance criteria, each mapping to a runnable check.
+Then remove the label with `gh issue edit N --remove-label needs:spike` (or
+`needs:refinement`) so that `pm` can prioritise it.

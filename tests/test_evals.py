@@ -168,3 +168,14 @@ def test_shipped_packs_pass_their_own_checks() -> None:
     findings = det.check_unreachable_rules(packs) + det.check_duplicate_rules(packs)
 
     assert [f.format() for f in findings] == []
+
+
+def test_an_empty_repo_stays_under_the_default_budget(tmp_path: Path) -> None:
+    """The always-on rules are the whole cost of an empty repository's
+    AGENTS.md, so this is the floor every consumer pays before its own
+    targets add a line."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    init(repo)
+
+    assert evaluate(repo) == 0

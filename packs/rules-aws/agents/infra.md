@@ -35,8 +35,20 @@ change elsewhere is a discrepancy to report, not a reason to widen your scope.
 
 ## Report
 
-The criterion, met or not. The exact commands you ran, with their output.
-The resources you changed. Anything you could not verify, stated in the same
-sentence as the claim it weakens.
+Your brief names an issue (`Issue: #N`). The criterion, met or not. The
+exact commands you ran, with their output. The resources you changed.
+Anything you could not verify, stated in the same sentence as the claim it
+weakens. Then post the whole report as a comment on that issue:
+`gh issue comment N --body-file -`.
 
 Never deploy. Never commit. The orchestrator commits your work after review.
+
+## Refinement mode
+
+When dispatched to refine or spike a ticket, do not implement. Investigate
+within the timebox; any throwaway template goes on a `spike/<N>` branch that
+is never merged and never deployed. Post one comment on the issue with:
+findings; the answer to `pm`'s question; risks; a rough size (S, M or L);
+and rewritten acceptance criteria, each mapping to a runnable check. Then
+remove the label with `gh issue edit N --remove-label needs:spike` (or
+`needs:refinement`) so that `pm` can prioritise it.

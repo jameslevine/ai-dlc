@@ -270,3 +270,48 @@ def test_service_packs_carry_only_conditional_rules(name: str) -> None:
 
 def test_security_pack_declares_itself_universal() -> None:
     assert load_builtin("rules-security").meta.applies_when.always is True
+
+
+# -- the ticket-first lifecycle ----------------------------------------------
+
+
+def test_core_ships_a_pm_agent_that_can_run_gh() -> None:
+    """`pm` does every GitHub operation through the `gh` CLI, so an agent
+    without `Bash` could file nothing and the lifecycle would never start."""
+    pack = load_builtin("core")
+    pm = next(agent for agent in pack.agents if agent.name == "pm")
+
+    assert "Bash" in pm.tools
+    assert "Never implements" in pm.description
+
+
+@pytest.mark.parametrize(
+    ("pack", "agent"),
+    [
+        ("core", "reviewer"),
+        ("rules-fastapi", "backend"),
+        ("rules-react", "frontend"),
+        ("rules-aws", "infra"),
+    ],
+)
+def test_downstream_agents_know_how_to_spike_a_ticket(pack: str, agent: str) -> None:
+    """The orchestrator dispatches a `needs:spike` ticket to the area's agent
+    in refinement mode, so each must carry that mode in its prompt. The
+    contract is textual; asserting on the text is what checks it."""
+    body = next(a for a in load_builtin(pack).agents if a.name == agent).body
+
+    assert "Refinement mode" in body
+    assert "Issue: #N" in body
+    assert "--remove-label" in body
+
+
+def test_core_carries_exactly_four_always_on_rules() -> None:
+    """The working agreement plus the ticket rule. Every turn pays for each,
+    so a fifth is a decision to take deliberately, not a drift to absorb."""
+    pack = load_builtin("core")
+    assert sorted(rule.id for rule in pack.rules if rule.always) == [
+        "existing-code",
+        "scope",
+        "tickets",
+        "verification",
+    ]

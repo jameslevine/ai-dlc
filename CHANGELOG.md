@@ -11,6 +11,25 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+### Added
+
+- A ticket-first lifecycle. `core` ships a `pm` agent that turns a corrected
+  plan into a GitHub epic and one issue per acceptance criterion, prioritises
+  them under an auditable rule, keeps a pinned `Roadmap` issue current, and
+  labels a ticket `needs:spike` or `needs:refinement` rather than guessing a
+  priority. A fourth always-on rule, "Work starts from a ticket and progress
+  lives on it", makes issues the source of truth: the issue number goes in
+  the commit message, bugs and todos are filed at once, and nothing about
+  progress lives in session state. The `plan`, `orchestrate`, `build` and
+  `review` skills follow: `orchestrate` runs `pm` first and routes
+  `needs:*` tickets to the area's agent in refinement mode before any build;
+  `build` posts its log entries as issue comments instead of `build.md`;
+  `review` posts to the epic and files each rule change as a `type:rules`
+  issue instead of writing `review.md`. The `reviewer`, `backend`,
+  `frontend` and `infra` agents take an `Issue: #N` in their brief, post
+  their report on it, and gain a refinement mode. `core`, `rules-fastapi`,
+  `rules-react` and `rules-aws` move to 0.3.0.
+
 ## [1.0.2] - 2026-09-23
 
 ### Fixed

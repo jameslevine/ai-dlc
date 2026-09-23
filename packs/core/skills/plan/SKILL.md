@@ -36,6 +36,7 @@ three-digit number in `ai-dlc/`.
 id: <NNN>-<slug>
 status: planned
 created: <YYYY-MM-DD>
+epic: "#N"
 ---
 
 # <Title>
@@ -62,3 +63,11 @@ created: <YYYY-MM-DD>
 Do not start building until a human has read the plan and corrected at least
 something. A plan that comes back untouched usually means it was not read, and
 an unread plan provides none of the value the step exists for.
+
+## Then the tickets
+
+Once the human has corrected the plan, the orchestrator hands it to `pm`,
+which files one epic issue for the unit and one issue per acceptance
+criterion. Record the epic's number in the plan's frontmatter as
+`epic: "#N"`. From then on task state lives on the issues, not in this file
+and not in the session.
