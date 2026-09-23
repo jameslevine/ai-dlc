@@ -11,6 +11,18 @@ for a pack). This file covers the CLI; each pack carries its own changelog.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-09-23
+
+### Fixed
+
+- `setup-aidlc` installs the CLI at `github.action_ref`: the ref its own
+  `uses:` line carries, which the release rewrite pins to the release commit,
+  so the CLI comes from the same pinned commit as every other internal
+  reference. 1.0.1 read `github.job_workflow_sha`, which a runner leaves
+  empty for a reusable workflow called from the same repository, so every
+  `plan` job on `@v1` still failed with "could not determine which aidlc
+  version to install". Verified on a runner this time.
+
 ## [1.0.1] - 2026-09-23
 
 ### Fixed
