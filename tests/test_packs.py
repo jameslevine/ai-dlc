@@ -82,6 +82,38 @@ def test_skill_name_must_match_its_directory() -> None:
         load_pack_from_files(files)
 
 
+def test_agent_tools_may_be_written_as_a_comma_separated_string() -> None:
+    """Claude Code's own examples write `tools: Read, Bash`, so that form must
+    load to the same list a YAML sequence would."""
+    files = {
+        "pack.yaml": MINIMAL_META,
+        "agents/reviewer.md": (
+            b"---\nname: reviewer\ndescription: d\ntools: Read, Grep, Bash\n"
+            b"skills: [review]\nmodel: sonnet\n---\n\nbody\n"
+        ),
+    }
+    pack = load_pack_from_files(files)
+
+    assert len(pack.agents) == 1
+    agent = pack.agents[0]
+    assert agent.tools == ["Read", "Grep", "Bash"]
+    assert agent.skills == ["review"]
+    assert agent.model == "sonnet"
+    assert agent.body == "body"
+
+
+def test_agent_name_must_match_its_filename() -> None:
+    """Claude Code addresses an agent by the name in its frontmatter and finds
+    it by filename, so a mismatch is an agent that exists under one name and
+    is invoked under another."""
+    files = {
+        "pack.yaml": MINIMAL_META,
+        "agents/reviewer.md": b"---\nname: other\ndescription: d\n---\n\nbody\n",
+    }
+    with pytest.raises(PackError, match="must match its filename"):
+        load_pack_from_files(files)
+
+
 def test_unknown_manifest_key_is_rejected() -> None:
     files = {"pack.yaml": MINIMAL_META + b"\nunknown_key: 1\n"}
     with pytest.raises(PackError, match="not valid"):
@@ -149,6 +181,14 @@ def test_shipped_pack_skills_are_usable(name: str) -> None:
     for skill in pack.skills:
         assert skill.description.strip()
         assert skill.body.strip()
+
+
+@pytest.mark.parametrize("name", available_builtin())
+def test_shipped_pack_agents_are_usable(name: str) -> None:
+    pack = load_builtin(name)
+    for agent in pack.agents:
+        assert agent.description.strip()
+        assert agent.body.strip()
 
 
 def test_loading_from_a_path_works(tmp_path: Path) -> None:

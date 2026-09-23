@@ -17,7 +17,7 @@ import yaml
 from pydantic import ValidationError
 
 from aidlc.packs.digest import digest_files
-from aidlc.schemas.pack import Emit, PackMeta, Rule, Skill
+from aidlc.schemas.pack import Agent, Emit, PackMeta, Rule, Skill
 
 #: Directory inside the wheel holding the builtin packs.
 _BUILTIN_ANCHOR = "aidlc._packs"
@@ -38,6 +38,7 @@ class Pack:
     meta: PackMeta
     rules: list[Rule] = field(default_factory=list)
     skills: list[Skill] = field(default_factory=list)
+    agents: list[Agent] = field(default_factory=list)
     files: dict[str, bytes] = field(default_factory=dict, repr=False)
     """Every file in the pack, keyed by path relative to the pack root. This is
     what the digest is computed over, so it must include `pack.yaml`."""
@@ -143,6 +144,57 @@ def _read_skill(pack_name: str, directory: str, text: str, resources_: dict[str,
     )
 
 
+def _read_agent(pack_name: str, relative: str, text: str) -> Agent:
+    frontmatter, body = parse_frontmatter(text)
+    stem = Path(relative).stem
+    name = frontmatter.get("name")
+    description = frontmatter.get("description")
+
+    # Claude Code addresses an agent by the `name` in its frontmatter and finds
+    # it by filename, so a mismatch is an agent that exists under one name and
+    # is invoked under another. Same rule as skills, enforced at the same point.
+    if not isinstance(name, str) or not name:
+        raise PackError(f"{pack_name}: agent '{stem}' has no 'name'")
+    if not isinstance(description, str) or not description:
+        raise PackError(f"{pack_name}: agent '{stem}' has no 'description'")
+    if name != stem:
+        raise PackError(f"{pack_name}: agent name '{name}' must match its filename '{stem}'")
+    if not body.strip():
+        raise PackError(f"{pack_name}: agent '{stem}' has a description but no body")
+
+    model = frontmatter.get("model")
+    if model is not None and not isinstance(model, str):
+        raise PackError(f"{pack_name}: agent '{stem}' has a 'model' that is not a string")
+
+    return Agent(
+        name=name,
+        description=description,
+        tools=_name_list(pack_name, stem, "tools", frontmatter.get("tools")),
+        model=model,
+        skills=_name_list(pack_name, stem, "skills", frontmatter.get("skills")),
+        body=body.strip(),
+        pack=pack_name,
+    )
+
+
+def _name_list(pack_name: str, agent: str, key: str, raw: object) -> list[str]:
+    """Read a list of names written either as YAML or comma-separated.
+
+    Claude Code's own examples write `tools: Read, Bash`, so that form has to
+    work; a YAML list is the natural alternative and reads to the same thing.
+    """
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        return [item.strip() for item in raw.split(",") if item.strip()]
+    if isinstance(raw, list) and all(isinstance(item, str) for item in raw):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    raise PackError(
+        f"{pack_name}: agent '{agent}' has '{key}' that is neither a list "
+        "nor a comma-separated string"
+    )
+
+
 def load_pack_from_files(files: dict[str, bytes], *, source: str = "builtin") -> Pack:
     """Build a :class:`Pack` from an in-memory file mapping.
 
@@ -182,6 +234,10 @@ def load_pack_from_files(files: dict[str, bytes], *, source: str = "builtin") ->
             pack.skills.append(
                 _read_skill(meta.name, directory, files[path].decode("utf-8"), extras)
             )
+
+    for path in sorted(files):
+        if path.startswith("agents/") and path.endswith(".md"):
+            pack.agents.append(_read_agent(meta.name, path, files[path].decode("utf-8")))
 
     return pack
 

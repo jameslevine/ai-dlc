@@ -41,7 +41,7 @@ def init_command(
     path: PathArg = None,
     *,
     force: Annotated[
-        bool, Parameter(help="Overwrite managed blocks that were edited by hand.")
+        bool, Parameter(help="Overwrite generated files and blocks that were edited by hand.")
     ] = False,
 ) -> int:
     """Detect this project and generate its agent and CI configuration."""
@@ -55,7 +55,7 @@ def sync_command(
     path: PathArg = None,
     *,
     force: Annotated[
-        bool, Parameter(help="Overwrite managed blocks that were edited by hand.")
+        bool, Parameter(help="Overwrite generated files and blocks that were edited by hand.")
     ] = False,
     dry_run: Annotated[bool, Parameter(help="Show what would change, write nothing.")] = False,
 ) -> int:

@@ -20,6 +20,7 @@ from aidlc.render.emitters import (
     Artifact,
     ArtifactKind,
     agents_md,
+    claude_agent_artifacts,
     copilot_instructions,
     cursor_rules,
     mcp_artifacts,
@@ -57,6 +58,8 @@ def plan(packs: list[Pack], profile: Profile, config: Config) -> list[Artifact]:
         artifacts.extend(skill_artifacts(packs))
     if config.emit.mcp:
         artifacts.extend(mcp_artifacts(config))
+    if config.emit.agents:
+        artifacts.extend(claude_agent_artifacts(packs))
 
     return sorted(artifacts, key=lambda a: a.path)
 

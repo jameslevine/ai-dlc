@@ -8,6 +8,11 @@
     },
     {
       "kind": "file",
+      "path": ".agents/skills/orchestrate/SKILL.md",
+      "sha256": "04c76a8db49e36f600da5079ce8c2790d1ea34ad42c51cf7c5f9ec5b42e54b98"
+    },
+    {
+      "kind": "file",
       "path": ".agents/skills/plan/SKILL.md",
       "sha256": "c0416140a855964b7eca08f59cf1f7e0553b09c6621a4730717fad0b0a3571d3"
     },
@@ -15,6 +20,11 @@
       "kind": "file",
       "path": ".agents/skills/review/SKILL.md",
       "sha256": "7cc4f721c0b7562d3934c40d3f8256c887c4b01af8d334c17c549e4da1924d53"
+    },
+    {
+      "kind": "file",
+      "path": ".claude/agents/reviewer.md",
+      "sha256": "e038c78130615b73a22ff94e0a3fbc16122b58ff01feb5dc152a207c8fcc30b1"
     },
     {
       "kind": "file",
@@ -80,15 +90,15 @@
       "identifier": "core",
       "kind": "block",
       "path": "AGENTS.md",
-      "sha256": "sha256:1c7662e129a369fb"
+      "sha256": "sha256:ec2586333c886acb"
     }
   ],
   "packs": [
     {
-      "digest": "sha256:0c51ac433c930a724562e72b48273bb0",
+      "digest": "sha256:c7fc0a59aa32b2f68a1f934e46f509e9",
       "name": "core",
       "source": "builtin",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "digest": "sha256:d8c2e0e50294bd5361b760e5f80eb549",

@@ -30,7 +30,9 @@ _BEGIN = re.compile(
     r"^<!--\s*aidlc:begin\s+(?P<attrs>[^>]*?)\s*-->\s*$",
     re.MULTILINE,
 )
-_END = re.compile(r"^<!--\s*aidlc:end\s*-->\s*$", re.MULTILINE)
+#: Trailing whitespace only, not `\s*`: that would swallow the newline after
+#: the marker, and every update would then strip the file's final newline.
+_END = re.compile(r"^<!--\s*aidlc:end\s*-->[ \t]*$", re.MULTILINE)
 _ATTR = re.compile(r"(\w+)=([^\s]+)")
 
 

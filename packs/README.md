@@ -13,6 +13,7 @@ A pack is a directory containing `pack.yaml` plus whatever its `kind` implies:
 |---|---|
 | `rules` | `rules/*.md` with `title`, `globs`, `always` frontmatter |
 | `skills` | `skills/<name>/SKILL.md` |
+| `agents` | `agents/<name>.md` with `name`, `description`, `tools`, `model`, `skills` frontmatter; rendered for Claude Code only |
 | `models` | `models.yml` |
 | `evals` | `cases/*.yaml` |
 | `lifecycle` | `lifecycle/*.md.j2` |

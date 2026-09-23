@@ -1,5 +1,5 @@
 name: core
-version: 0.1.0
+version: 0.2.0
 kind: mixed
 summary: >-
   Universal working agreement and the plan/build/review lifecycle. Installed in
@@ -14,3 +14,4 @@ applies_when:
 emits:
   - agents_md
   - skills
+  - claude_agents
